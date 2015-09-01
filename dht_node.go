@@ -1,5 +1,9 @@
 package dht
 
+import (
+	"fmt"
+)
+
 type Contact struct {
 	ip   string
 	port string
@@ -31,7 +35,8 @@ func makeDHTNode(nodeId *string, ip string, port string) *DHTNode {
 }
 
 func (dhtNode *DHTNode) addToRing(newDHTNode *DHTNode) {
-	// TODO
+	dhtNode.successor = newDHTNode
+	newDHTNode.predecessor = dhtNode
 }
 
 func (dhtNode *DHTNode) lookup(key string) *DHTNode {
@@ -50,7 +55,7 @@ func (dhtNode *DHTNode) responsible(key string) bool {
 }
 
 func (dhtNode *DHTNode) printRing() {
-	// TODO
+
 }
 
 func (dhtNode *DHTNode) testCalcFingers(m int, bits int) {

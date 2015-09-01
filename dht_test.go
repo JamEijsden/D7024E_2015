@@ -5,6 +5,8 @@ import (
 	"testing"
 )
 
+/* run with go test -test.run TestDHT1 */
+
 func TestDHT1(t *testing.T) {
 	id0 := "00"
 	id1 := "01"
@@ -34,11 +36,12 @@ func TestDHT1(t *testing.T) {
 
 	fmt.Println("-> ring structure")
 	node1b.printRing()
-
-	node3b.testCalcFingers(0, 3)
-	node3b.testCalcFingers(1, 3)
-	node3b.testCalcFingers(2, 3)
-	node3b.testCalcFingers(3, 3)
+	/*
+		node3b.testCalcFingers(0, 3)
+		node3b.testCalcFingers(1, 3)
+		node3b.testCalcFingers(2, 3)
+		node3b.testCalcFingers(3, 3)
+	*/
 }
 
 func TestDHT2(t *testing.T) {
