@@ -71,9 +71,24 @@ func (dhtNode *DHTNode) addToRing(newDHTNode *DHTNode) {
 	}
 }
 
-func (dhtNode *DHTNode) lookup(key string) *DHTNode {
-	// TODO
-	return dhtNode // XXX This is not correct obviously
+func (dhtNode *DHTNode) lookup(key string) { /* *DHTNode */
+	node := lookuphelp(dhtNode, key)
+	if node == dhtNode {
+		fmt.Println("LOOPEEDOOPEDOOPEEDOOOOOOOP")
+	}
+	fmt.Println("nodeID = " + node.nodeId)
+}
+
+func (dhtNode *DHTNode) lookuphelp(start *DHTNode, key string) *DHTNode {
+	if dhtNode.nodeId != start.nodeId {
+		result := between([]byte(dhtNode.nodeId), []byte(dhtNode.successor.nodeId), []byte(key)) /* tar nodeX, nodeX+1 och en hash jag kollar upp */
+		if result {
+			return dhtNode
+		} else {
+			dhtNode.successor.lookuphelp(start, key) //infinite loop?
+		}
+	}
+	return dhtNode /* We've done a loop. */
 }
 
 func (dhtNode *DHTNode) acceleratedLookupUsingFingers(key string) *DHTNode {
