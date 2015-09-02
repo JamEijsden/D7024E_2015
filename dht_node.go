@@ -39,6 +39,7 @@ func testBetween(id1, id2, key string) {
 	fmt.Println(between([]byte(id1), []byte(id2), []byte(key)))
 }
 
+/* Connects and rearranges nodes */
 func (dhtNode *DHTNode) addToRing(newDHTNode *DHTNode) {
 	// Two first nodes
 	var result bool
@@ -46,8 +47,9 @@ func (dhtNode *DHTNode) addToRing(newDHTNode *DHTNode) {
 	if dhtNode.successor != nil {
 		result = between([]byte(dhtNode.nodeId), []byte(dhtNode.successor.nodeId), []byte(newDHTNode.nodeId))
 	}
-
+	//Initiation of ring, 2 node ring
 	if dhtNode.successor == nil && dhtNode.predecessor == nil {
+		fmt.Println("\n-> changes done to ring: ")
 		dhtNode.successor = newDHTNode
 		dhtNode.predecessor = newDHTNode
 		newDHTNode.successor = dhtNode
@@ -85,7 +87,15 @@ func (dhtNode *DHTNode) responsible(key string) bool {
 }
 
 func (dhtNode *DHTNode) printRing() {
-	fmt.Println("Done")
+	fmt.Println(dhtNode.nodeId)
+	printRingHelper(dhtNode, dhtNode.successor)
+
+}
+func printRingHelper(start *DHTNode, n *DHTNode) {
+	if start.nodeId != n.nodeId {
+		fmt.Println(n.nodeId)
+		printRingHelper(start, n.successor)
+	}
 }
 
 func (dhtNode *DHTNode) testCalcFingers(m int, bits int) {
