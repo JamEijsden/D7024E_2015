@@ -37,13 +37,12 @@ func TestDHT1(t *testing.T) {
 	fmt.Println("-> ring structure")
 	node1b.printRing()
 
-	node0b.lookup("05")
-	/*
-		node3b.testCalcFingers(0, 3)
-		node3b.testCalcFingers(1, 3)
-		node3b.testCalcFingers(2, 3)
-		node3b.testCalcFingers(3, 3)
-	*/
+	//node0b.lookup("05")
+	//node3b.testCalcFingers(0, 3) //node 4, dist 1
+	node3b.testCalcFingers(1, 3) // node 4, dist 1
+	node3b.testCalcFingers(2, 3) // node 5, dist 2
+	node3b.testCalcFingers(3, 3) // node 7, dist 4
+
 }
 
 func TestB(t *testing.T) {

@@ -1,8 +1,11 @@
 package dht
 
 import (
+	"encoding/hex"
 	"fmt"
 )
+
+const KEYSPACE int64 = 3
 
 type Contact struct {
 	ip   string
@@ -109,6 +112,7 @@ func (dhtNode *DHTNode) responsible(key string) bool {
 func (dhtNode *DHTNode) printRing() {
 	fmt.Println(dhtNode.nodeId)
 	printRingHelper(dhtNode, dhtNode.successor)
+	fmt.Println("->done\n")
 
 }
 func printRingHelper(start *DHTNode, n *DHTNode) {
@@ -119,12 +123,12 @@ func printRingHelper(start *DHTNode, n *DHTNode) {
 }
 
 func (dhtNode *DHTNode) testCalcFingers(m int, bits int) {
-	/* idBytes, _ := hex.DecodeString(dhtNode.nodeId)
+	idBytes, _ := hex.DecodeString(dhtNode.nodeId)
 	fingerHex, _ := calcFinger(idBytes, m, bits)
 	fingerSuccessor := dhtNode.lookup(fingerHex)
 	fingerSuccessorBytes, _ := hex.DecodeString(fingerSuccessor.nodeId)
-	fmt.Println("successor    " + fingerSuccessor.nodeId)
+	fmt.Println("From testCalcFingers\nsuccessor    " + fingerSuccessor.nodeId)
 
 	dist := distance(idBytes, fingerSuccessorBytes, bits)
-	fmt.Println("distance     " + dist.String()) */
+	fmt.Println("distance     " + dist.String())
 }
