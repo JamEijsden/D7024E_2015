@@ -45,8 +45,11 @@ func TestDHT1(t *testing.T) {
 
 }
 
-func TestB(t *testing.T) {
+func TestBetwee(t *testing.T) {
 	testBetween("05", "06", "05")
+}
+func TestDistance(t *testing.T) {
+	fmt.Println(distance([]byte("03"), []byte("06"), 3))
 }
 func TestDHT2(t *testing.T) {
 	node1 := makeDHTNode(nil, "localhost", "1111")

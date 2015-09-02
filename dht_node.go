@@ -5,7 +5,7 @@ import (
 	"fmt"
 )
 
-const KEYSPACE int64 = 3
+const BITS int64 = 3
 
 type Contact struct {
 	ip   string
@@ -16,14 +16,23 @@ type DHTNode struct {
 	nodeId      string
 	successor   *DHTNode
 	predecessor *DHTNode
+	fingers     *FingerTable
 	contact     Contact
+}
+
+type FingerTable struct {
+	start          string
+	fingerTable    [BITS]*DHTNode
+	fingerDistance [BITS]int64
+	bits           int64
 }
 
 func makeDHTNode(nodeId *string, ip string, port string) *DHTNode {
 	dhtNode := new(DHTNode)
 	dhtNode.contact.ip = ip
 	dhtNode.contact.port = port
-
+	dhtNode.fingers = new(FingerTable)
+	dhtNode.fingers.bits = BITS
 	if nodeId == nil {
 		genNodeId := generateNodeId()
 		dhtNode.nodeId = genNodeId
@@ -99,7 +108,7 @@ func (dhtNode *DHTNode) lookuphelp(start *DHTNode, key string) *DHTNode {
 
 }
 
-func (dhtNode *DHTNode) acceleratedLookupUsingFingers(key string) *DHTNode {
+func (dhtNode *DHTNode) acceleratedLookupUsingFingerTable(key string) *DHTNode {
 	// TODO
 	return dhtNode // XXX This is not correct obviously
 }
@@ -127,7 +136,7 @@ func (dhtNode *DHTNode) testCalcFingers(m int, bits int) {
 	fingerHex, _ := calcFinger(idBytes, m, bits)
 	fingerSuccessor := dhtNode.lookup(fingerHex)
 	fingerSuccessorBytes, _ := hex.DecodeString(fingerSuccessor.nodeId)
-	fmt.Println("From testCalcFingers\nsuccessor    " + fingerSuccessor.nodeId)
+	fmt.Println("From testCalcFingerTable\nsuccessor    " + fingerSuccessor.nodeId)
 
 	dist := distance(idBytes, fingerSuccessorBytes, bits)
 	fmt.Println("distance     " + dist.String())
