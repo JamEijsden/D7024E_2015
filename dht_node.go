@@ -71,24 +71,29 @@ func (dhtNode *DHTNode) addToRing(newDHTNode *DHTNode) {
 	}
 }
 
-func (dhtNode *DHTNode) lookup(key string) { /* *DHTNode */
-	node := lookuphelp(dhtNode, key)
-	if node == dhtNode {
-		fmt.Println("LOOPEEDOOPEDOOPEEDOOOOOOOP")
+func (dhtNode *DHTNode) lookup(key string) *DHTNode { /* *DHTNode  */
+	fmt.Println("\n\n")
+	var node *DHTNode
+	if between([]byte(dhtNode.nodeId), []byte(dhtNode.successor.nodeId), []byte(key)) {
+		return dhtNode
+	} else {
+		node = dhtNode.successor.lookuphelp(dhtNode, key)
 	}
-	fmt.Println("nodeID = " + node.nodeId)
+	//	fmt.Println("Looking for node: " + key)
+	//	fmt.Println("Responsible Node = " + node.nodeId)
+	return node
 }
 
 func (dhtNode *DHTNode) lookuphelp(start *DHTNode, key string) *DHTNode {
-	if dhtNode.nodeId != start.nodeId {
-		result := between([]byte(dhtNode.nodeId), []byte(dhtNode.successor.nodeId), []byte(key)) /* tar nodeX, nodeX+1 och en hash jag kollar upp */
-		if result {
-			return dhtNode
-		} else {
-			dhtNode.successor.lookuphelp(start, key) //infinite loop?
-		}
+	//fmt.Println(dhtNode.nodeId)
+	result := between([]byte(dhtNode.nodeId), []byte(dhtNode.successor.nodeId), []byte(key)) /* tar nodeX, nodeX+1 och en hash jag kollar upp */
+	if result {
+		return dhtNode
+	} else {
+		//		fmt.Println(dhtNode.successor.nodeId)
+		return dhtNode.successor.lookuphelp(start, key) /* Does lookup again with one clockwise rotation */
 	}
-	return dhtNode /* We've done a loop. */
+
 }
 
 func (dhtNode *DHTNode) acceleratedLookupUsingFingers(key string) *DHTNode {

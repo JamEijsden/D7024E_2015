@@ -36,6 +36,8 @@ func TestDHT1(t *testing.T) {
 
 	fmt.Println("-> ring structure")
 	node1b.printRing()
+
+	node0b.lookup("05")
 	/*
 		node3b.testCalcFingers(0, 3)
 		node3b.testCalcFingers(1, 3)
@@ -45,7 +47,7 @@ func TestDHT1(t *testing.T) {
 }
 
 func TestB(t *testing.T) {
-	testBetween("00", "10", "07")
+	testBetween("05", "06", "05")
 }
 func TestDHT2(t *testing.T) {
 	node1 := makeDHTNode(nil, "localhost", "1111")
