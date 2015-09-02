@@ -44,6 +44,9 @@ func TestDHT1(t *testing.T) {
 	*/
 }
 
+func TestB(t *testing.T) {
+	testBetween("00", "10", "07")
+}
 func TestDHT2(t *testing.T) {
 	node1 := makeDHTNode(nil, "localhost", "1111")
 	node2 := makeDHTNode(nil, "localhost", "1112")

@@ -34,9 +34,39 @@ func makeDHTNode(nodeId *string, ip string, port string) *DHTNode {
 	return dhtNode
 }
 
+func testBetween(id1, id2, key string) {
+	fmt.Println(id1 + " " + id2 + " " + key + " ")
+	fmt.Println(between([]byte(id1), []byte(id2), []byte(key)))
+}
+
 func (dhtNode *DHTNode) addToRing(newDHTNode *DHTNode) {
-	dhtNode.successor = newDHTNode
-	newDHTNode.predecessor = dhtNode
+	// Two first nodes
+	var result bool
+
+	if dhtNode.successor != nil {
+		result = between([]byte(dhtNode.nodeId), []byte(dhtNode.successor.nodeId), []byte(newDHTNode.nodeId))
+	}
+
+	if dhtNode.successor == nil && dhtNode.predecessor == nil {
+		dhtNode.successor = newDHTNode
+		dhtNode.predecessor = newDHTNode
+		newDHTNode.successor = dhtNode
+		newDHTNode.predecessor = dhtNode
+		fmt.Println(dhtNode.nodeId + "-> s " + dhtNode.successor.nodeId)
+		fmt.Println(newDHTNode.nodeId + "-> s " + newDHTNode.successor.nodeId + "\n")
+
+		// Connecting last node with first(6 -> 7 -> 0)
+	} else if result == true && dhtNode.successor != nil && dhtNode.predecessor != nil {
+		dhtNode.successor.predecessor = newDHTNode
+		newDHTNode.successor = dhtNode.successor
+		dhtNode.successor = newDHTNode
+		newDHTNode.predecessor = dhtNode
+		fmt.Println(dhtNode.nodeId + "-> s " + dhtNode.successor.nodeId)
+		fmt.Println(newDHTNode.nodeId + "-> s " + newDHTNode.successor.nodeId + "\n")
+
+	} else {
+		dhtNode.successor.addToRing(newDHTNode)
+	}
 }
 
 func (dhtNode *DHTNode) lookup(key string) *DHTNode {
@@ -55,7 +85,7 @@ func (dhtNode *DHTNode) responsible(key string) bool {
 }
 
 func (dhtNode *DHTNode) printRing() {
-
+	fmt.Println("Done")
 }
 
 func (dhtNode *DHTNode) testCalcFingers(m int, bits int) {
