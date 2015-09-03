@@ -20,26 +20,18 @@ type DHTNode struct {
 	contact     Contact
 }
 
-type FingerTable struct {
-	start          string
-	fingerTable    [BITS]*DHTNode
-	fingerDistance [BITS]int64
-	bits           int
-}
-
 func makeDHTNode(nodeId *string, ip string, port string) *DHTNode {
 	dhtNode := new(DHTNode)
 	dhtNode.contact.ip = ip
 	dhtNode.contact.port = port
 	dhtNode.fingers = new(FingerTable)
-	dhtNode.fingers.bits = BITS
 	if nodeId == nil {
 		genNodeId := generateNodeId()
 		dhtNode.nodeId = genNodeId
 	} else {
 		dhtNode.nodeId = *nodeId
 	}
-	//dhtNode.fingers.fingerTable = createFingers(dhtNode)
+	dhtNode.fingers.fingerTable = nil
 	dhtNode.successor = nil
 	dhtNode.predecessor = nil
 
@@ -132,20 +124,4 @@ func (dhtNode *DHTNode) printFingers(m int, bits int) {
 
 	dist := distance(idBytes, fingerSuccessorBytes, bits)
 	fmt.Println("distance     " + dist.String())
-}
-
-func createFingers(dhtNode *DHTNode) [BITS]*DHTNode {
-	var nodes [BITS]*DHTNode
-	//var distnc [BITS]int
-
-	for i := 0; i < BITS; i++ {
-		idBytes, _ := hex.DecodeString(dhtNode.nodeId)
-		fingerHex, _ := calcFinger(idBytes, (i + 1), BITS)
-		fingerSuccessor := dhtNode.lookup(fingerHex)
-		//fingerSuccessorBytes, _ := hex.DecodeString(fingerSuccessor.nodeId)
-		//dist := distance(idBytes, fingerSuccessorBytes, BITS)
-		nodes[i] = fingerSuccessor
-
-	}
-	return nodes
 }
