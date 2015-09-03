@@ -58,8 +58,11 @@ func (dhtNode *DHTNode) addToRing(newDHTNode *DHTNode) {
 		newDHTNode.predecessor = dhtNode
 		fmt.Println(dhtNode.nodeId + "-> s " + dhtNode.successor.nodeId)
 		fmt.Println(newDHTNode.nodeId + "-> s " + newDHTNode.successor.nodeId + "\n")
+		dhtNode.fingers.fingerList = findFingers(dhtNode)
 		newDHTNode.fingers.fingerList = findFingers(newDHTNode)
+		dhtNode.stabilize(dhtNode.nodeId)
 		newDHTNode.stabilize(newDHTNode.nodeId)
+
 		// Connecting last node with first(6 -> 7 -> 0)
 	} else if result == true && dhtNode.successor != nil && dhtNode.predecessor != nil {
 		dhtNode.successor.predecessor = newDHTNode
@@ -73,6 +76,7 @@ func (dhtNode *DHTNode) addToRing(newDHTNode *DHTNode) {
 	} else {
 		dhtNode.successor.addToRing(newDHTNode)
 	}
+
 }
 
 func (dhtNode *DHTNode) lookup(key string) *DHTNode { /* *DHTNode  */
@@ -117,9 +121,24 @@ func printRingHelper(start *DHTNode, n *DHTNode) {
 
 func (dhtNode *DHTNode) stabilize(start string) {
 	if dhtNode.successor.nodeId != start {
-		updateFingers(dhtNode.successor)
+		fmt.Println(dhtNode.successor.nodeId + " NODELIST: ")
+		//	fmt.Println("FUCK MY LIFE IM STOOPID " + dhtNode.successor.nodeId)
+		test := updateFingers(dhtNode.successor)
+		for i := 0; i < 3; i++ {
+			if test[i] != nil {
+
+				fmt.Print(test[i].nodeId + " ")
+			}
+		}
+		fmt.Println("")
 		dhtNode.successor.stabilize(start)
 	}
+	/*
+		fmt.Println(dhtNode.nodeId)
+		fmt.Print(dhtNode.fingers.fingerList[0].nodeId + " ")
+		fmt.Print(dhtNode.fingers.fingerList[1].nodeId + " ")
+		fmt.Print(dhtNode.fingers.fingerList[2].nodeId + " \n")
+	*/
 	/* interate through every node in system
 	call func updateFingers() to update current node. */
 }
