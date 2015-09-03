@@ -37,16 +37,16 @@ func TestDHT1(t *testing.T) {
 	fmt.Println("-> ring structure")
 	node1b.printRing()
 
-	//node0b.lookup("05")
+	node3b.lookup("04")
 	//node3b.testCalcFingers(0, 3) //node 4, dist 1
-	node3b.testCalcFingers(1, 3) // node 4, dist 1
-	node3b.testCalcFingers(2, 3) // node 5, dist 2
-	node3b.testCalcFingers(3, 3) // node 7, dist 4
+	node3b.printFingers(1, 3) // node 4, dist 1
+	node3b.printFingers(2, 3) // node 5, dist 2
+	node3b.printFingers(3, 3) // node 7, dist 4
 
 }
 
-func TestBetwee(t *testing.T) {
-	testBetween("05", "06", "05")
+func TestBetween(t *testing.T) {
+	testBetween("03", "02", "02")
 }
 func TestDistance(t *testing.T) {
 	fmt.Println(distance([]byte("03"), []byte("06"), 3))
