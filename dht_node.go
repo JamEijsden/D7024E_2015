@@ -32,7 +32,7 @@ func makeDHTNode(nodeId *string, ip string, port string) *DHTNode {
 	dhtNode.predecessor = nil
 
 	dhtNode.fingers = new(FingerTable)
-	dhtNode.fingers.fingerTable = [BITS]*DHTNode{}
+	dhtNode.fingers.fingerList = [BITS]*DHTNode{}
 	return dhtNode
 }
 

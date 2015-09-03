@@ -8,7 +8,7 @@ import (
 const BITS int = 3
 
 type FingerTable struct {
-	fingerTable [BITS]*DHTNode
+	fingerList [BITS]*DHTNode
 }
 
 func findFingers(dhtNode *DHTNode) [BITS]*DHTNode {
