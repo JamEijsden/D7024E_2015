@@ -34,14 +34,15 @@ func TestDHT1(t *testing.T) {
 	node3b.addToRing(node6b)
 	node3b.addToRing(node7b)
 
+	fmt.Println(findFingers(node0b))
 	fmt.Println("-> ring structure")
 	node1b.printRing()
 
 	node3b.lookup("04")
 	//node3b.testCalcFingers(0, 3) //node 4, dist 1
-	node3b.printFingers(1, 3) // node 4, dist 1
-	node3b.printFingers(2, 3) // node 5, dist 2
-	node3b.printFingers(3, 3) // node 7, dist 4
+	//node3b.printFingers(1, 3) // node 4, dist 1
+	//node3b.printFingers(2, 3) // node 5, dist 2
+	//node3b.printFingers(3, 3) // node 7, dist 4
 
 }
 

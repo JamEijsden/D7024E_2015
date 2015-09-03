@@ -5,8 +5,6 @@ import (
 	"fmt"
 )
 
-const BITS int = 3
-
 type Contact struct {
 	ip   string
 	port string
@@ -24,17 +22,17 @@ func makeDHTNode(nodeId *string, ip string, port string) *DHTNode {
 	dhtNode := new(DHTNode)
 	dhtNode.contact.ip = ip
 	dhtNode.contact.port = port
-	dhtNode.fingers = new(FingerTable)
 	if nodeId == nil {
 		genNodeId := generateNodeId()
 		dhtNode.nodeId = genNodeId
 	} else {
 		dhtNode.nodeId = *nodeId
 	}
-	dhtNode.fingers.fingerTable = nil
 	dhtNode.successor = nil
 	dhtNode.predecessor = nil
 
+	dhtNode.fingers = new(FingerTable)
+	dhtNode.fingers.fingerTable = [BITS]*DHTNode{}
 	return dhtNode
 }
 
