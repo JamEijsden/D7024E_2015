@@ -58,7 +58,8 @@ func (dhtNode *DHTNode) addToRing(newDHTNode *DHTNode) {
 		newDHTNode.predecessor = dhtNode
 		fmt.Println(dhtNode.nodeId + "-> s " + dhtNode.successor.nodeId)
 		fmt.Println(newDHTNode.nodeId + "-> s " + newDHTNode.successor.nodeId + "\n")
-
+		newDHTNode.fingers.fingerList = findFingers(newDHTNode)
+		newDHTNode.stabilize(newDHTNode.nodeId)
 		// Connecting last node with first(6 -> 7 -> 0)
 	} else if result == true && dhtNode.successor != nil && dhtNode.predecessor != nil {
 		dhtNode.successor.predecessor = newDHTNode
@@ -67,7 +68,8 @@ func (dhtNode *DHTNode) addToRing(newDHTNode *DHTNode) {
 		newDHTNode.predecessor = dhtNode
 		fmt.Println(dhtNode.nodeId + "-> s " + dhtNode.successor.nodeId)
 		fmt.Println(newDHTNode.nodeId + "-> s " + newDHTNode.successor.nodeId + "\n")
-
+		newDHTNode.fingers.fingerList = findFingers(newDHTNode)
+		newDHTNode.stabilize(newDHTNode.nodeId)
 	} else {
 		dhtNode.successor.addToRing(newDHTNode)
 	}
@@ -111,6 +113,15 @@ func printRingHelper(start *DHTNode, n *DHTNode) {
 		fmt.Println(n.nodeId)
 		printRingHelper(start, n.successor)
 	}
+}
+
+func (dhtNode *DHTNode) stabilize(start string) {
+	if dhtNode.successor.nodeId != start {
+		updateFingers(dhtNode.successor)
+		dhtNode.successor.stabilize(start)
+	}
+	/* interate through every node in system
+	call func updateFingers() to update current node. */
 }
 
 func (dhtNode *DHTNode) printFingers(m int, bits int) {
