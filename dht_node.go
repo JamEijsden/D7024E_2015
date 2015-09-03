@@ -76,7 +76,7 @@ func (dhtNode *DHTNode) addToRing(newDHTNode *DHTNode) {
 func (dhtNode *DHTNode) lookup(key string) *DHTNode { /* *DHTNode  */
 
 	if dhtNode.responsible(key) {
-		fmt.Println(dhtNode.nodeId)
+		//fmt.Println(dhtNode.nodeId)
 		return dhtNode
 	} else {
 
