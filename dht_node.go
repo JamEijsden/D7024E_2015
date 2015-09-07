@@ -14,8 +14,16 @@ type DHTNode struct {
 	nodeId      string
 	successor   *DHTNode
 	predecessor *DHTNode
+	pred        string
+	succ        string
 	fingers     *FingerTable
 	contact     Contact
+	transport   *Transport
+}
+
+func (dhtNode DHTNode) helloWorld(t, address string) {
+	msg := createMsg(t, dhtNode.nodeId, dhtNode.contact.ip+":"+dhtNode.contact.port, address, "")
+	dhtNode.transport.send(msg)
 }
 
 func makeDHTNode(nodeId *string, ip string, port string) *DHTNode {
@@ -33,15 +41,34 @@ func makeDHTNode(nodeId *string, ip string, port string) *DHTNode {
 
 	dhtNode.fingers = new(FingerTable)
 	dhtNode.fingers.fingerList = [BITS]*DHTNode{}
+
+	dhtNode.transport = new(Transport)
+	dhtNode.transport.bindAddress = ip + ":" + port
+	dhtNode.transport.node = dhtNode
+
 	return dhtNode
 }
+
+func (dhtNode *DHTNode) nodeJoin(msg *Msg) {
+	if dhtNode.successor == nil && dhtNode.predecessor == nil {
+		dhtNode.succ = msg.Src
+		dhtNode.pred = msg.Src
+		fmt.Println(dhtNode.succ + " and " + dhtNode.pred)
+		if msg.Type != "accept" {
+			msg := createMsg("accept", dhtNode.nodeId, dhtNode.contact.ip+":"+dhtNode.contact.port, msg.Src, "")
+			dhtNode.transport.send(msg)
+		}
+	}
+}
+
+/***************************************************** WITHOUT NETWORK, ONLY LOCAL *********************************************/
 
 func testBetween(id1, id2, key string) {
 	fmt.Println(id1 + " " + id2 + " " + key + " ")
 	fmt.Println(between([]byte(id1), []byte(id2), []byte(key)))
 }
 
-/* Connects and rearranges nodes */
+// Connects and rearranges nodes
 func (dhtNode *DHTNode) addToRing(newDHTNode *DHTNode) {
 	// Two first nodes
 	var result bool

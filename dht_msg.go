@@ -5,17 +5,19 @@ import (
 )
 
 type Msg struct {
-	Timestamp int64
+	Timestamp int64 `json:"time"`
 
-	Type string
+	Type string `json:"type"`
 
-	Key string
+	Key string `json:"key"`
 
-	Src string
+	Src string `json:"src"`
 
-	Dst string
+	Dst string `json:"dst"`
 
-	Origin string
+	Origin string `json:"origin"`
+
+	//Node *DHTNode `json:"node"`
 }
 
 func createMsg(t, k, s, d, o string) *Msg {
@@ -25,6 +27,7 @@ func createMsg(t, k, s, d, o string) *Msg {
 	msg.Src = s
 	msg.Dst = d
 	msg.Origin = o
-	msg.Timestamp = time.Time.UnxNano()
+	//msg.Node = n
+	msg.Timestamp = time.Now().UnixNano()
 	return msg
 }

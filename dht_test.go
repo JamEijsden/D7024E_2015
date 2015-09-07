@@ -2,8 +2,42 @@ package dht
 
 import (
 	"fmt"
+	//"os"
 	"testing"
 )
+
+func TestNetwork(t *testing.T) {
+	fmt.Println("Beginning test..")
+	node1 := makeDHTNode(nil, "localhost", "1111")
+	node2 := makeDHTNode(nil, "localhost", "1112")
+	node3 := makeDHTNode(nil, "localhost", "1113")
+	node4 := makeDHTNode(nil, "localhost", "1114")
+	node5 := makeDHTNode(nil, "localhost", "1115")
+	node6 := makeDHTNode(nil, "localhost", "1116")
+	node7 := makeDHTNode(nil, "localhost", "1117")
+	//	node8 := makeDHTNode(nil, "localhost", "1118")
+	//	node9 := makeDHTNode(nil, "localhost", "1119")
+
+	go node1.transport.listen()
+	go node2.transport.listen()
+	go node3.transport.listen()
+	go node4.transport.listen()
+	go node5.transport.listen()
+	go node6.transport.listen()
+	node1.helloWorld("join", "localhost:1112")
+	node7.transport.listen()
+
+	/*fmt.Print("Enter text: ")
+	var input string
+	fmt.Scanln(&input)
+	//fmt.Print(input)
+
+	var b []byte = make([]byte, 1)
+	os.Stdin.Read(b)
+	if string(b) == "q" {
+		return
+	} */
+}
 
 /* run with go test -test.run TestDHT1 */
 
