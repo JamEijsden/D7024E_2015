@@ -90,8 +90,22 @@ func (dhtNode *DHTNode) lookup(key string) *DHTNode { /* *DHTNode  */
 	}
 }
 
-func (dhtNode *DHTNode) acceleratedLookupUsingFingerTable(key string) *DHTNode {
-	// TODO
+func (dhtNode *DHTNode) acceleratedLookupUsingFingerTable(key string, length int) *DHTNode {
+	if dhtNode.responsible(key) {
+		return dhtNode
+	} else {
+		temp := length - 1
+		for temp >= 0 {
+			if between([]byte(dhtNode.nodeId), []byte(dhtNode.fingers.fingerList[temp].nodeId), []byte(key)) {
+				if dhtNode.successor.nodeId == dhtNode.fingers.fingerList[temp].nodeId {
+					return dhtNode.fingers.fingerList[temp].acceleratedLookupUsingFingerTable(key, temp)
+				}
+				temp = temp - 1
+			} else {
+				return dhtNode.fingers.fingerList[temp].acceleratedLookupUsingFingerTable(key, temp)
+			}
+		}
+	}
 	return dhtNode // XXX This is not correct obviously
 }
 
@@ -102,8 +116,8 @@ func (dhtNode *DHTNode) responsible(key string) bool {
 	} else if dhtNode.predecessor.nodeId == key {
 		return false
 	}
-	result := between([]byte(dhtNode.predecessor.nodeId), []byte(dhtNode.nodeId), []byte(key))
-	return result
+	isResponsible := between([]byte(dhtNode.nodeId), []byte(dhtNode.successor.nodeId), []byte(key))
+	return isResponsible
 }
 
 func (dhtNode *DHTNode) printRing() {
