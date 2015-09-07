@@ -5,7 +5,7 @@ import (
 	"fmt"
 )
 
-const BITS int = 3
+const BITS int = 160
 
 type FingerTable struct {
 	fingerList [BITS]*DHTNode

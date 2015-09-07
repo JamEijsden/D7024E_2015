@@ -63,14 +63,7 @@ func TestDHT2(t *testing.T) {
 	node8 := makeDHTNode(nil, "localhost", "1118")
 	node9 := makeDHTNode(nil, "localhost", "1119")
 
-	key1 := "2b230fe12d1c9c60a8e489d028417ac89de57635"
-	key2 := "87adb987ebbd55db2c5309fd4b23203450ab0083"
-	key3 := "74475501523a71c34f945ae4e87d571c2c57f6f3"
-
-	fmt.Println("TEST: " + node1.lookup(key1).nodeId + " is responsible for " + key1)
-	fmt.Println("TEST: " + node1.lookup(key2).nodeId + " is responsible for " + key2)
-	fmt.Println("TEST: " + node1.lookup(key3).nodeId + " is responsible for " + key3)
-
+	fmt.Println("-> ring structure")
 	node1.addToRing(node2)
 	node1.addToRing(node3)
 	node1.addToRing(node4)
@@ -80,15 +73,20 @@ func TestDHT2(t *testing.T) {
 	node3.addToRing(node8)
 	node7.addToRing(node9)
 
-	fmt.Println("-> ring structure")
 	node1.printRing()
+
+	key1 := "2b230fe12d1c9c60a8e489d028417ac89de57635"
+	key2 := "87adb987ebbd55db2c5309fd4b23203450ab0083"
+	key3 := "74475501523a71c34f945ae4e87d571c2c57f6f3"
+
+	fmt.Println("TEST: " + node1.lookup(key1).nodeId + " is responsible for " + key1)
+	fmt.Println("TEST: " + node1.lookup(key2).nodeId + " is responsible for " + key2)
+	fmt.Println("TEST: " + node1.lookup(key3).nodeId + " is responsible for " + key3)
 
 	nodeForKey1 := node1.lookup(key1)
 	fmt.Println("dht node " + nodeForKey1.nodeId + " running at " + nodeForKey1.contact.ip + ":" + nodeForKey1.contact.port + " is responsible for " + key1)
-
 	nodeForKey2 := node1.lookup(key2)
 	fmt.Println("dht node " + nodeForKey2.nodeId + " running at " + nodeForKey2.contact.ip + ":" + nodeForKey2.contact.port + " is responsible for " + key2)
-
 	nodeForKey3 := node1.lookup(key3)
 	fmt.Println("dht node " + nodeForKey3.nodeId + " running at " + nodeForKey3.contact.ip + ":" + nodeForKey3.contact.port + " is responsible for " + key3)
 }
