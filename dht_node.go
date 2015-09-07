@@ -94,19 +94,23 @@ func (dhtNode *DHTNode) acceleratedLookupUsingFingerTable(key string, length int
 	if dhtNode.responsible(key) {
 		return dhtNode
 	} else {
-		temp := length - 1
+		temp := length //length of list
 		for temp >= 0 {
-			if between([]byte(dhtNode.nodeId), []byte(dhtNode.fingers.fingerList[temp].nodeId), []byte(key)) {
-				if dhtNode.successor.nodeId == dhtNode.fingers.fingerList[temp].nodeId {
-					return dhtNode.fingers.fingerList[temp].acceleratedLookupUsingFingerTable(key, temp)
+			fmt.Println(dhtNode.nodeId + " - finger: " + dhtNode.fingers.fingerList[temp].nodeId)
+			//fmt.Println(temp)
+			if between([]byte(dhtNode.nodeId), []byte(dhtNode.fingers.fingerList[temp].nodeId), []byte(key)) { //check if nodeId and it's last finger is between the key
+				if dhtNode.successor.nodeId == dhtNode.fingers.fingerList[temp].nodeId && temp == 0 {
+					return dhtNode.successor
 				}
 				temp = temp - 1
+				fmt.Println(temp)
 			} else {
-				return dhtNode.fingers.fingerList[temp].acceleratedLookupUsingFingerTable(key, temp)
+				fmt.Println("change node: " + dhtNode.fingers.fingerList[temp].nodeId)
+				return dhtNode.fingers.fingerList[temp].acceleratedLookupUsingFingerTable(key, length)
 			}
 		}
 	}
-	return dhtNode // XXX This is not correct obviously
+	return dhtNode
 }
 
 func (dhtNode *DHTNode) responsible(key string) bool {
@@ -116,7 +120,7 @@ func (dhtNode *DHTNode) responsible(key string) bool {
 	} else if dhtNode.predecessor.nodeId == key {
 		return false
 	}
-	isResponsible := between([]byte(dhtNode.nodeId), []byte(dhtNode.successor.nodeId), []byte(key))
+	isResponsible := between([]byte(dhtNode.predecessor.nodeId), []byte(dhtNode.nodeId), []byte(key))
 	return isResponsible
 }
 
