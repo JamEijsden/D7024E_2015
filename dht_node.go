@@ -56,8 +56,8 @@ func (dhtNode *DHTNode) addToRing(newDHTNode *DHTNode) {
 		dhtNode.predecessor = newDHTNode
 		newDHTNode.successor = dhtNode
 		newDHTNode.predecessor = dhtNode
-		//fmt.Println(dhtNode.nodeId + "-> s " + dhtNode.successor.nodeId)
-		//fmt.Println(newDHTNode.nodeId + "-> s " + newDHTNode.successor.nodeId + "\n")
+		fmt.Println(dhtNode.nodeId + "-> s " + dhtNode.successor.nodeId)
+		fmt.Println(newDHTNode.nodeId + "-> s " + newDHTNode.successor.nodeId + "\n")
 		dhtNode.fingers.fingerList = findFingers(dhtNode)
 		newDHTNode.fingers.fingerList = findFingers(newDHTNode)
 		dhtNode.stabilize(dhtNode.nodeId)
@@ -69,8 +69,8 @@ func (dhtNode *DHTNode) addToRing(newDHTNode *DHTNode) {
 		newDHTNode.successor = dhtNode.successor
 		dhtNode.successor = newDHTNode
 		newDHTNode.predecessor = dhtNode
-		//fmt.Println(dhtNode.nodeId + "-> s " + dhtNode.successor.nodeId)
-		//fmt.Println(newDHTNode.nodeId + "-> s " + newDHTNode.successor.nodeId + "\n")
+		fmt.Println(dhtNode.nodeId + "-> s " + dhtNode.successor.nodeId)
+		fmt.Println(newDHTNode.nodeId + "-> s " + newDHTNode.successor.nodeId + "\n")
 		newDHTNode.fingers.fingerList = findFingers(newDHTNode)
 		newDHTNode.stabilize(newDHTNode.nodeId)
 	} else {
@@ -94,19 +94,23 @@ func (dhtNode *DHTNode) acceleratedLookupUsingFingerTable(key string, length int
 	if dhtNode.responsible(key) {
 		return dhtNode
 	} else {
-		temp := length - 1
+		temp := length //length of list
 		for temp >= 0 {
-			if between([]byte(dhtNode.nodeId), []byte(dhtNode.fingers.fingerList[temp].nodeId), []byte(key)) {
-				if dhtNode.successor.nodeId == dhtNode.fingers.fingerList[temp].nodeId {
-					return dhtNode.fingers.fingerList[temp].acceleratedLookupUsingFingerTable(key, temp)
+			fmt.Println(dhtNode.nodeId + " - finger: " + dhtNode.fingers.fingerList[temp].nodeId)
+			//fmt.Println(temp)
+			if between([]byte(dhtNode.nodeId), []byte(dhtNode.fingers.fingerList[temp].nodeId), []byte(key)) { //check if nodeId and it's last finger is between the key
+				if dhtNode.successor.nodeId == dhtNode.fingers.fingerList[temp].nodeId && temp == 0 {
+					return dhtNode.successor
 				}
 				temp = temp - 1
+				fmt.Println(temp)
 			} else {
-				return dhtNode.fingers.fingerList[temp].acceleratedLookupUsingFingerTable(key, temp)
+				fmt.Println("change node: " + dhtNode.fingers.fingerList[temp].nodeId)
+				return dhtNode.fingers.fingerList[temp].acceleratedLookupUsingFingerTable(key, length)
 			}
 		}
 	}
-	return dhtNode // XXX This is not correct obviously
+	return dhtNode
 }
 
 func (dhtNode *DHTNode) responsible(key string) bool {
@@ -116,7 +120,7 @@ func (dhtNode *DHTNode) responsible(key string) bool {
 	} else if dhtNode.predecessor.nodeId == key {
 		return false
 	}
-	isResponsible := between([]byte(dhtNode.nodeId), []byte(dhtNode.successor.nodeId), []byte(key))
+	isResponsible := between([]byte(dhtNode.predecessor.nodeId), []byte(dhtNode.nodeId), []byte(key))
 	return isResponsible
 }
 
@@ -135,13 +139,16 @@ func printRingHelper(start *DHTNode, n *DHTNode) {
 
 func (dhtNode *DHTNode) stabilize(start string) {
 	if dhtNode.successor.nodeId != start {
+		fmt.Println(dhtNode.successor.nodeId + " NODELIST: ")
 		//	fmt.Println("FUCK MY LIFE IM STOOPID " + dhtNode.successor.nodeId)
 		test := updateFingers(dhtNode.successor)
 		for i := 0; i < 3; i++ {
 			if test[i] != nil {
 
+				fmt.Print(test[i].nodeId + " ")
 			}
 		}
+		fmt.Println("")
 		dhtNode.successor.stabilize(start)
 	}
 	/*
