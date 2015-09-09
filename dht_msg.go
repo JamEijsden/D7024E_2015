@@ -31,3 +31,11 @@ func createMsg(t, k, s, d, o string) *Msg {
 	msg.Timestamp = time.Now().UnixNano()
 	return msg
 }
+
+func createReplyMsg() *Msg {
+	return nil
+}
+
+func createJoinMsg() *Msg {
+	return nil
+}

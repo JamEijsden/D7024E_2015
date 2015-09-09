@@ -41,10 +41,9 @@ func makeDHTNode(nodeId *string, ip string, port string) *DHTNode {
 
 	dhtNode.fingers = new(FingerTable)
 	dhtNode.fingers.fingerList = [BITS]*DHTNode{}
-
-	dhtNode.transport = new(Transport)
-	dhtNode.transport.bindAddress = ip + ":" + port
-	dhtNode.transport.node = dhtNode
+	bindAdr := (dhtNode.contact.ip + ":" + dhtNode.contact.port)
+	dhtNode.transport = CreateTransport(dhtNode, bindAdr)
+	go dhtNode.transport.processMsg()
 
 	return dhtNode
 }

@@ -24,7 +24,9 @@ func TestNetwork(t *testing.T) {
 	go node4.transport.listen()
 	go node5.transport.listen()
 	go node6.transport.listen()
-	node1.helloWorld("join", "localhost:1112")
+	go node1.helloWorld("join", "localhost:1112")
+	go node4.helloWorld("join", "localhost:1112")
+	go node3.helloWorld("join", "localhost:1112")
 	node7.transport.listen()
 
 	/*fmt.Print("Enter text: ")
