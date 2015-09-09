@@ -29,7 +29,15 @@ func (transport *Transport) processMsg() {
 		for {
 			select {
 			case m := <-transport.queue:
-				fmt.Println(m.Src)
+				switch m.Type {
+				case "test":
+					go transport.send(createReplyMsg(m.Key, m.Src, m.Dst))
+				case "join":
+					createMsg(t, k, s, d, o)
+				case "reply":
+					fmt.Println(transport.bindAddress + "> Hi, This is a reply to your message!")
+				}
+
 			case msg2 := <-c2:
 				fmt.Println(msg2)
 			}
