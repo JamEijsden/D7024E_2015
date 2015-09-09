@@ -9,38 +9,50 @@ import (
 type Transport struct {
 	node        *DHTNode
 	bindAddress string
+	queue chan *Msg
+}
+
+func CreateTransport(node *DHTNode, bindAddress string) {
+	transport := &Transport{}
+	transport.queue make(chan *Msg)
+	transport.node = node
+	transport.bindAddress = bindAddress
+
+	return transport
+}
+
+func (transport *Transport) processMsg() {
+	msg := <- transport.queue
+
+	go func() {
+		  for {
+      		select {
+      			case msg1 := <- c1:
+        fmt.Println(msg1)
+      case msg2 := <- c2:
+        fmt.Println(msg2)
+      }
+    }
+	}()
 }
 
 func (transport *Transport) listen() {
-	udpAddr, err := net.ResolveUDPAddr("udp", transport.bindAddress)
-	conn, err := net.ListenUDP("udp", udpAddr)
+	udpAddr, err := net.ResolveUDPAddr("udp", transport.bindAddress)  //adds adress to variable udpAddr and err msg in var err is there is one.
+	conn, err := net.ListenUDP("udp", udpAddr) //we listen to the IP-adress in udpAddr.
 	fmt.Println("Server running on " + transport.bindAddress + " with ID " + transport.node.nodeId + "\nWaiting for messages..")
 	if err != nil {
 		fmt.Println(err.Error())
 	}
 	defer conn.Close()
-	dec := json.NewDecoder(conn)
+	dec := json.NewDecoder(conn) //decodes conn and adds to variable dec
 	for {
 		msg := Msg{}
-		err = dec.Decode(&msg)
+		err = dec.Decode(&msg) //decodes the message where the message adress is and adds an error msg if there's none.
 
-		if msg.Type == "test" {
-			fmt.Println("\n" + transport.bindAddress + " received msg from " + msg.Src)
-			fmt.Println("Message type: " + msg.Type)
-			fmt.Print(msg.Timestamp)
-			fmt.Println(": " + msg.Key)
-			reply := Msg{1337, "test", "Reply to your hello world", transport.bindAddress, msg.Src, transport.bindAddress}
-			go transport.send(&reply)
+		transport.queue <- msg
 
-		} else if msg.Type == "join" || msg.Type == "accept" {
-			fmt.Println("joining..")
-			transport.node.nodeJoin(&msg)
-		} else {
-			fmt.Println(transport.node.nodeId + ": Type operation not found for: ")
-			fmt.Print(msg)
-
-		}
-		return
+	
+		//return
 		//	we	got	a	message, do something
 	}
 }
