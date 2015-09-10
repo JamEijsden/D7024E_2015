@@ -17,13 +17,12 @@ func CreateTransport(node *DHTNode, bindAddress string) *Transport {
 	transport.queue = make(chan *Msg)
 	transport.node = node
 	transport.bindAddress = bindAddress
-
 	return transport
 }
 
 func (transport *Transport) processMsg() {
 	//msg := <-transport.queue
-	c2 := make(chan string)
+	joinChan := make(chan *Msg)
 
 	go func() {
 		for {
@@ -31,15 +30,17 @@ func (transport *Transport) processMsg() {
 			case m := <-transport.queue:
 				switch m.Type {
 				case "test":
-					go transport.send(createReplyMsg(m.Key, m.Src, m.Dst))
-				case "join":
-					createMsg(t, k, s, d, o)
-				case "reply":
-					fmt.Println(transport.bindAddress + "> Hi, This is a reply to your message!")
+					transport.send(createReplyMsg(m.Key, m.Src, m.Dst))
+				case "join", "init":
+					transport.node.nodeJoin(m)
+				case "pred", "succ":
+					transport.node.reconnNodes(m)
+				case "circle":
+					transport.node.netPrintRing(m)
 				}
-
-			case msg2 := <-c2:
-				fmt.Println(msg2)
+			case jMsg := <-joinChan:
+				fmt.Println("JOION")
+				transport.node.nodeJoin(jMsg)
 			}
 		}
 	}()
@@ -47,7 +48,8 @@ func (transport *Transport) processMsg() {
 
 func (transport *Transport) listen() {
 	udpAddr, err := net.ResolveUDPAddr("udp", transport.bindAddress) //adds adress to variable udpAddr and err msg in var err is there is one.
-	conn, err := net.ListenUDP("udp", udpAddr)                       //we listen to the IP-adress in udpAddr.
+
+	conn, err := net.ListenUDP("udp", udpAddr) //we listen to the IP-adress in udpAddr.
 	//fmt.Println("Server running on " + transport.bindAddress + " with ID " + transport.node.nodeId + "\nWaiting for messages..")
 	if err != nil {
 		fmt.Println(err.Error())
@@ -57,7 +59,7 @@ func (transport *Transport) listen() {
 	for {
 		msg := Msg{}
 		err = dec.Decode(&msg) //decodes the message where the message adress is and adds an error msg if there's none.
-		fmt.Println(transport.bindAddress + "> Received Message from " + msg.Src)
+		//fmt.Println(transport.bindAddress + "> Received Message from " + msg.Src)
 
 		transport.queue <- &msg
 
@@ -67,7 +69,7 @@ func (transport *Transport) listen() {
 }
 
 func (transport *Transport) send(msg *Msg) {
-	fmt.Println("\nPreparing to send msg from " + msg.Src + " to " + msg.Dst)
+	fmt.Println(msg.Key + "> Type: " + msg.Type + " to " + msg.Dst)
 	udpAddr, err := net.ResolveUDPAddr("udp", msg.Dst)
 	if err != nil {
 		fmt.Println(err.Error())

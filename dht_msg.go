@@ -32,12 +32,17 @@ func createMsg(t, k, s, d, o string) *Msg {
 	return msg
 }
 
-func createReplyMsg(k, s, d) *Msg {
+func createReplyMsg(k, s, d string) *Msg {
 	msg := createMsg("reply", k, s, d, s)
 	return msg
 }
 
-func createJoinMsg(k, s, d) *Msg {
+func createJoinMsg(k, s, d string) *Msg {
 	msg := createMsg("join", k, s, d, s)
+	return msg
+}
+
+func createInitMsg(k, s, d string) *Msg {
+	msg := createMsg("init", k, s, d, s)
 	return msg
 }

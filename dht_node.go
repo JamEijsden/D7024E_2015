@@ -3,6 +3,7 @@ package dht
 import (
 	"encoding/hex"
 	"fmt"
+	"sync"
 )
 
 type Contact struct {
@@ -14,15 +15,17 @@ type DHTNode struct {
 	nodeId      string
 	successor   *DHTNode
 	predecessor *DHTNode
-	pred        string
-	succ        string
+	pred        [2]string
+	succ        [2]string
 	fingers     *FingerTable
 	contact     Contact
 	transport   *Transport
 }
 
-func (dhtNode DHTNode) helloWorld(t, address string) {
-	msg := createMsg(t, dhtNode.nodeId, dhtNode.contact.ip+":"+dhtNode.contact.port, address, "")
+func (dhtNode DHTNode) helloWorld(t, address string, wg *sync.WaitGroup) {
+
+	defer wg.Done()
+	msg := createMsg(t, dhtNode.nodeId, dhtNode.contact.ip+":"+dhtNode.contact.port, address, dhtNode.contact.ip+":"+dhtNode.contact.port)
 	dhtNode.transport.send(msg)
 }
 
@@ -30,6 +33,8 @@ func makeDHTNode(nodeId *string, ip string, port string) *DHTNode {
 	dhtNode := new(DHTNode)
 	dhtNode.contact.ip = ip
 	dhtNode.contact.port = port
+	dhtNode.succ = [2]string{}
+	dhtNode.pred = [2]string{}
 	if nodeId == nil {
 		genNodeId := generateNodeId()
 		dhtNode.nodeId = genNodeId
@@ -47,16 +52,80 @@ func makeDHTNode(nodeId *string, ip string, port string) *DHTNode {
 
 	return dhtNode
 }
+func (dhtNode *DHTNode) startServer(wg *sync.WaitGroup) {
+	wg.Done()
+	dhtNode.transport.listen()
+
+}
 
 func (dhtNode *DHTNode) nodeJoin(msg *Msg) {
-	if dhtNode.successor == nil && dhtNode.predecessor == nil {
-		dhtNode.succ = msg.Src
-		dhtNode.pred = msg.Src
-		fmt.Println(dhtNode.succ + " and " + dhtNode.pred)
-		if msg.Type != "accept" {
-			msg := createMsg("accept", dhtNode.nodeId, dhtNode.contact.ip+":"+dhtNode.contact.port, msg.Src, "")
+	//var wg sync.WaitGroup
+	var result bool
+	sender := dhtNode.contact.ip + ":" + dhtNode.contact.port
+	if dhtNode.succ[0] != "" {
+		result = between([]byte(dhtNode.nodeId), []byte(dhtNode.succ[0]), []byte(msg.Key))
+	}
+	if dhtNode.succ[0] == "" && dhtNode.pred[0] == "" {
+		dhtNode.succ[1] = msg.Src
+		dhtNode.pred[1] = msg.Src
+		dhtNode.succ[0] = msg.Key
+		dhtNode.pred[0] = msg.Key
+		fmt.Println(dhtNode.succ[0] + "<- succ :" + dhtNode.nodeId + ": pred -> " + dhtNode.pred[0] + "\n")
+		if msg.Type != "init" {
+			msg := createInitMsg(dhtNode.nodeId, sender, msg.Src) // RACE CONDITION?
 			dhtNode.transport.send(msg)
+		} else if msg.Type == "init" {
+			fmt.Println("Ring initiated")
+
 		}
+	} else if result == true && dhtNode.succ[1] != "" && dhtNode.pred[1] != "" {
+
+		go dhtNode.transport.send(createMsg("pred", msg.Key, sender, dhtNode.succ[1], msg.Origin))
+		go dhtNode.transport.send(createMsg("succ", dhtNode.succ[0], sender, msg.Src, sender))
+		dhtNode.succ[1] = msg.Src
+		dhtNode.succ[0] = msg.Key
+		go dhtNode.transport.send(createMsg("pred", dhtNode.nodeId, sender, msg.Src, sender))
+		fmt.Println(dhtNode.succ[0] + "<- succ :" + dhtNode.nodeId + ": pred -> " + dhtNode.pred[0] + "\n")
+	} else {
+		go dhtNode.transport.send(createMsg("join", msg.Key, sender, dhtNode.succ[1], msg.Origin))
+	}
+}
+
+func (dhtNode *DHTNode) reconnNodes(msg *Msg) {
+	mutex := &sync.Mutex{}
+	switch msg.Type {
+	case "pred":
+		mutex.Lock()
+		if msg.Src == msg.Src {
+			dhtNode.pred[1] = msg.Src
+		} else {
+			dhtNode.pred[1] = msg.Origin
+		}
+		dhtNode.pred[0] = msg.Key
+		mutex.Unlock()
+		fmt.Println(dhtNode.nodeId + "> Reconnected predecessor, " + msg.Key + "\n")
+	case "succ":
+		mutex.Lock()
+		if msg.Src == msg.Src {
+			dhtNode.succ[1] = msg.Src
+		} else {
+			dhtNode.succ[1] = msg.Origin
+		}
+		dhtNode.succ[0] = msg.Key
+		mutex.Unlock()
+		fmt.Println(dhtNode.nodeId + "> Reconnected successor, " + msg.Key + "\n")
+	}
+}
+
+func (dhtNode *DHTNode) netPrintRing(msg *Msg) {
+	var orig string
+	fmt.Println(dhtNode.nodeId + ">" + dhtNode.contact.port)
+	if msg == nil {
+		orig = dhtNode.contact.ip + ":" + dhtNode.contact.port
+		go dhtNode.transport.send(createMsg("circle", "", dhtNode.contact.ip+":"+dhtNode.contact.port, dhtNode.succ[1], orig))
+	}
+	if dhtNode.succ[1] != msg.Origin && msg != nil {
+		go dhtNode.transport.send(createMsg("circle", "", dhtNode.contact.ip+":"+dhtNode.contact.port, dhtNode.succ[1], msg.Origin))
 	}
 }
 

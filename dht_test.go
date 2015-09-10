@@ -2,32 +2,78 @@ package dht
 
 import (
 	"fmt"
-	//"os"
+	"sync"
 	"testing"
+	"time"
 )
 
+func joinRing(dhtNode *DHTNode, wg *sync.WaitGroup) {
+	wg.Add(1)
+	go dhtNode.helloWorld("join", "localhost:1111", wg)
+	wg.Wait()
+}
 func TestNetwork(t *testing.T) {
 	fmt.Println("Beginning test..")
-	node1 := makeDHTNode(nil, "localhost", "1111")
-	node2 := makeDHTNode(nil, "localhost", "1112")
-	node3 := makeDHTNode(nil, "localhost", "1113")
-	node4 := makeDHTNode(nil, "localhost", "1114")
-	node5 := makeDHTNode(nil, "localhost", "1115")
-	node6 := makeDHTNode(nil, "localhost", "1116")
-	node7 := makeDHTNode(nil, "localhost", "1117")
-	//	node8 := makeDHTNode(nil, "localhost", "1118")
-	//	node9 := makeDHTNode(nil, "localhost", "1119")
+	var wg sync.WaitGroup
 
-	go node1.transport.listen()
-	go node2.transport.listen()
-	go node3.transport.listen()
-	go node4.transport.listen()
-	go node5.transport.listen()
-	go node6.transport.listen()
-	go node1.helloWorld("join", "localhost:1112")
-	go node4.helloWorld("join", "localhost:1112")
-	go node3.helloWorld("join", "localhost:1112")
-	node7.transport.listen()
+	id1 := "01"
+	id2 := "02"
+	id3 := "03"
+	id4 := "04"
+	id5 := "05"
+	id6 := "06"
+	id7 := "07"
+	id8 := "08"
+
+	node1 := makeDHTNode(&id1, "localhost", "1111")
+	node2 := makeDHTNode(&id2, "localhost", "1112")
+	node3 := makeDHTNode(&id3, "localhost", "1113")
+	node4 := makeDHTNode(&id4, "localhost", "1114")
+	node5 := makeDHTNode(&id5, "localhost", "1115")
+	node6 := makeDHTNode(&id6, "localhost", "1116")
+	node7 := makeDHTNode(&id7, "localhost", "1117")
+	node8 := makeDHTNode(&id8, "localhost", "1118")
+	//	node9 := makeDHTNode(nil, "localhost", "1119")
+	wg.Add(7)
+	go node1.startServer(&wg)
+	go node2.startServer(&wg)
+	go node3.startServer(&wg)
+	go node4.startServer(&wg)
+	go node5.startServer(&wg)
+	go node6.startServer(&wg)
+	go node7.startServer(&wg)
+	wg.Wait()
+
+	//joinRing(node1, &wg)
+	joinRing(node2, &wg)
+	joinRing(node3, &wg)
+	joinRing(node4, &wg)
+	joinRing(node5, &wg)
+	joinRing(node6, &wg)
+	joinRing(node7, &wg)
+
+	//node2.joinRing(&wg)
+	/*node3.joinRing(&wg)
+	node4.joinRing(&wg)
+	node5.joinRing(&wg)
+	node6.joinRing(&wg)
+	node7.joinRing(&wg)
+	node8.joinRing(&wg)*/
+	//go node2.netPrintRing(createMsg("circle", "", "localhost:1112", node2.succ[1], "localhost:1112"))
+
+	time.Sleep(time.Second * 5)
+
+	fmt.Println(node1.contact.port + "> " + node1.succ[0])
+	fmt.Println(node2.contact.port + "> " + node2.succ[0])
+	fmt.Println(node3.contact.port + "> " + node3.succ[0])
+	fmt.Println(node4.contact.port + "> " + node4.succ[0])
+	fmt.Println(node5.contact.port + "> " + node5.succ[0])
+	fmt.Println(node6.contact.port + "> " + node6.succ[0])
+	fmt.Println(node7.contact.port + "> " + node7.succ[0])
+
+	//node1.netPrintRing(nil)
+
+	node8.transport.listen()
 
 	/*fmt.Print("Enter text: ")
 	var input string
