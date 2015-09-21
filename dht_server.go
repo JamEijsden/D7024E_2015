@@ -22,7 +22,7 @@ func CreateTransport(node *DHTNode, bindAddress string) *Transport {
 
 func (transport *Transport) processMsg() {
 	//msg := <-transport.queue
-	joinChan := make(chan *Msg)
+	//joinChan := make(chan *Msg)
 
 	go func() {
 		for {
@@ -33,12 +33,12 @@ func (transport *Transport) processMsg() {
 					transport.node.nodeJoin(m)
 				case "pred", "succ":
 					transport.node.reconnNodes(m)
-				case "circle":
-					transport.node.netPrintRing(m)
+				case "lookup":
+					transport.node.lookupForward(m)
+				case "lookup_found":
+					go transport.node.found(&Finger{m.Key, m.Src})
+					//fmt.Println(&Finger{m.Key, m.Src})
 				}
-			case jMsg := <-joinChan:
-				fmt.Println("JOION")
-				transport.node.nodeJoin(jMsg)
 			}
 		}
 	}()

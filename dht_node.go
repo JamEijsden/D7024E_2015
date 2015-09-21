@@ -18,6 +18,7 @@ type DHTNode struct {
 	fingers   *FingerTable
 	contact   Contact
 	transport *Transport
+	sm        chan *Finger
 }
 
 func (dhtNode DHTNode) sendMsg(t, address string, wg *sync.WaitGroup) {
@@ -31,6 +32,7 @@ func makeDHTNode(nodeId *string, ip string, port string) *DHTNode {
 	dhtNode := new(DHTNode)
 	dhtNode.contact.ip = ip
 	dhtNode.contact.port = port
+	dhtNode.sm = make(chan *Finger)
 	dhtNode.succ = [2]string{}
 	dhtNode.pred = [2]string{}
 	if nodeId == nil {
@@ -120,36 +122,29 @@ func (dhtNode *DHTNode) reconnNodes(msg *Msg) {
 	//fmt.Println(dhtNode)
 }
 
-func (dhtNode *DHTNode) netPrintRing(msg *Msg) {
-	var orig string
-	fmt.Println(dhtNode.nodeId + ">" + dhtNode.contact.port)
-	if msg == nil {
-		orig = dhtNode.contact.ip + ":" + dhtNode.contact.port
-		go dhtNode.transport.send(createMsg("circle", "", dhtNode.contact.ip+":"+dhtNode.contact.port, dhtNode.succ[1], orig))
-	}
-	if dhtNode.succ[1] != msg.Origin && msg != nil {
-		go dhtNode.transport.send(createMsg("circle", "", dhtNode.contact.ip+":"+dhtNode.contact.port, dhtNode.succ[1], msg.Origin))
-	}
-}
-
-func (dhtNode *DHTNode) lookup(key string) *Finger {
+func (dhtNode *DHTNode) lookup(key string) {
 	src := dhtNode.contact.ip + ":" + dhtNode.contact.port
 	if dhtNode.responsible(key) {
-		//fmt.Println(dhtNode.nodeId)
-		return &Finger{dhtNode.nodeId, src}
+		//fmt.Println(dhtNode.nodeId + "is responsible")
+		dhtNode.sm <- &Finger{dhtNode.nodeId, src}
 	} else {
 		// send here
 		dhtNode.transport.send(createMsg("lookup", key, src, dhtNode.succ[1], src))
 		//return dhtNode.successor.lookup(key)
-		return dhtNode.fingers.fingerList[0]
 	}
 }
 
 func (dhtNode *DHTNode) lookupForward(msg *Msg) {
+	src := dhtNode.contact.ip + ":" + dhtNode.contact.port
 	if dhtNode.responsible(msg.Key) {
-		dhtNode.transport.send(createMsg("lookup_found", k, s, d, o))
+		dhtNode.transport.send(createMsg("lookup_found", dhtNode.nodeId, src, msg.Origin, src))
+	} else {
+		dhtNode.transport.send(createMsg("lookup", msg.Key, src, dhtNode.succ[1], msg.Origin))
 	}
 
+}
+func (dhtNode *DHTNode) found(f *Finger) {
+	dhtNode.sm <- f
 }
 
 func (dhtNode *DHTNode) responsible(key string) bool {
