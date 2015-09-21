@@ -7,10 +7,23 @@ import (
 	"time"
 )
 
-func joinRing(dhtNode *DHTNode, wg *sync.WaitGroup) {
-	wg.Add(1)
-	go dhtNode.helloWorld("join", "localhost:1111", wg)
-	wg.Wait()
+func (node *DHTNode) joinRing(dhtNode *DHTNode, wg *sync.WaitGroup) {
+	rec := dhtNode.contact.ip + ":" + dhtNode.contact.port
+	if dhtNode.succ[0] == "" {
+		//Initiate ring
+		wg.Add(1)
+		go node.helloWorld("init", rec, wg)
+		wg.Wait()
+		time.Sleep(time.Second * 1)
+	} else {
+		wg.Add(1)
+		go node.helloWorld("join", rec, wg)
+		wg.Wait()
+	}
+}
+
+func initiateRing() {
+
 }
 func TestNetwork(t *testing.T) {
 	fmt.Println("Beginning test..")
@@ -45,12 +58,19 @@ func TestNetwork(t *testing.T) {
 	wg.Wait()
 
 	//joinRing(node1, &wg)
-	joinRing(node2, &wg)
-	joinRing(node3, &wg)
-	joinRing(node4, &wg)
-	joinRing(node5, &wg)
-	joinRing(node6, &wg)
-	joinRing(node7, &wg)
+	node2.joinRing(node1, &wg)
+
+	//
+
+	node3.joinRing(node1, &wg)
+	/*S
+	node4.joinRing(node1, &wg)
+
+	node5.joinRing(node1, &wg)
+
+	node6.joinRing(node1, &wg)
+
+	node7.joinRing(node1, &wg)
 
 	//node2.joinRing(&wg)
 	/*node3.joinRing(&wg)
@@ -63,13 +83,13 @@ func TestNetwork(t *testing.T) {
 
 	time.Sleep(time.Second * 5)
 
-	fmt.Println(node1.contact.port + "> " + node1.succ[0])
-	fmt.Println(node2.contact.port + "> " + node2.succ[0])
-	fmt.Println(node3.contact.port + "> " + node3.succ[0])
-	fmt.Println(node4.contact.port + "> " + node4.succ[0])
-	fmt.Println(node5.contact.port + "> " + node5.succ[0])
-	fmt.Println(node6.contact.port + "> " + node6.succ[0])
-	fmt.Println(node7.contact.port + "> " + node7.succ[0])
+	fmt.Println(node1.contact.port + "> " + node1.pred[0] + " " + node1.succ[0])
+	fmt.Println(node2.contact.port + "> " + node2.pred[0] + " " + node2.succ[0])
+	fmt.Println(node3.contact.port + "> " + node3.pred[0] + " " + node3.succ[0])
+	fmt.Println(node4.contact.port + "> " + node4.pred[0] + " " + node4.succ[0])
+	fmt.Println(node5.contact.port + "> " + node5.pred[0] + " " + node5.succ[0])
+	fmt.Println(node6.contact.port + "> " + node6.pred[0] + " " + node6.succ[0])
+	fmt.Println(node7.contact.port + "> " + node7.pred[0] + " " + node7.succ[0])
 
 	//node1.netPrintRing(nil)
 

@@ -29,8 +29,10 @@ func (transport *Transport) processMsg() {
 			select {
 			case m := <-transport.queue:
 				switch m.Type {
-				case "test":
-					transport.send(createReplyMsg(m.Key, m.Src, m.Dst))
+				case "ack":
+					transport.node.wg.Done()
+					fmt.Println("ACK")
+					//transport.node.Ack()
 				case "join", "init":
 					transport.node.nodeJoin(m)
 				case "pred", "succ":
@@ -60,7 +62,7 @@ func (transport *Transport) listen() {
 		msg := Msg{}
 		err = dec.Decode(&msg) //decodes the message where the message adress is and adds an error msg if there's none.
 		//fmt.Println(transport.bindAddress + "> Received Message from " + msg.Src)
-
+		fmt.Println(msg)
 		transport.queue <- &msg
 
 		//return
@@ -69,7 +71,7 @@ func (transport *Transport) listen() {
 }
 
 func (transport *Transport) send(msg *Msg) {
-	fmt.Println(msg.Key + "> Type: " + msg.Type + " to " + msg.Dst)
+	fmt.Println(msg.Src + "> Type: " + msg.Key + " " + msg.Type + " to " + msg.Dst)
 	udpAddr, err := net.ResolveUDPAddr("udp", msg.Dst)
 	if err != nil {
 		fmt.Println(err.Error())

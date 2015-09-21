@@ -20,6 +20,7 @@ type DHTNode struct {
 	fingers     *FingerTable
 	contact     Contact
 	transport   *Transport
+	wg          sync.WaitGroup
 }
 
 func (dhtNode DHTNode) helloWorld(t, address string, wg *sync.WaitGroup) {
@@ -35,6 +36,7 @@ func makeDHTNode(nodeId *string, ip string, port string) *DHTNode {
 	dhtNode.contact.port = port
 	dhtNode.succ = [2]string{}
 	dhtNode.pred = [2]string{}
+	dhtNode.wg = sync.WaitGroup{}
 	if nodeId == nil {
 		genNodeId := generateNodeId()
 		dhtNode.nodeId = genNodeId
@@ -58,6 +60,10 @@ func (dhtNode *DHTNode) startServer(wg *sync.WaitGroup) {
 
 }
 
+func (dhtNode *DHTNode) Ack() {
+	dhtNode.wg.Done()
+}
+
 func (dhtNode *DHTNode) nodeJoin(msg *Msg) {
 	//var wg sync.WaitGroup
 	var result bool
@@ -71,20 +77,21 @@ func (dhtNode *DHTNode) nodeJoin(msg *Msg) {
 		dhtNode.succ[0] = msg.Key
 		dhtNode.pred[0] = msg.Key
 		fmt.Println(dhtNode.succ[0] + "<- succ :" + dhtNode.nodeId + ": pred -> " + dhtNode.pred[0] + "\n")
-		if msg.Type != "init" {
+		if msg.Type == "init" {
 			msg := createInitMsg(dhtNode.nodeId, sender, msg.Src) // RACE CONDITION?
 			dhtNode.transport.send(msg)
-		} else if msg.Type == "init" {
+		} else if msg.Origin != msg.Dst {
 			fmt.Println("Ring initiated")
 
 		}
 	} else if result == true && dhtNode.succ[1] != "" && dhtNode.pred[1] != "" {
 
-		go dhtNode.transport.send(createMsg("pred", msg.Key, sender, dhtNode.succ[1], msg.Origin))
-		go dhtNode.transport.send(createMsg("succ", dhtNode.succ[0], sender, msg.Src, sender))
-		dhtNode.succ[1] = msg.Src
+		dhtNode.transport.send(createMsg("pred", msg.Key, sender, dhtNode.succ[1], msg.Origin))
+
+		dhtNode.transport.send(createMsg("succ", dhtNode.succ[0], sender, msg.Origin, msg.Src))
+		dhtNode.succ[1] = msg.Origin
 		dhtNode.succ[0] = msg.Key
-		go dhtNode.transport.send(createMsg("pred", dhtNode.nodeId, sender, msg.Src, sender))
+		dhtNode.transport.send(createMsg("pred", dhtNode.nodeId, sender, msg.Src, sender))
 		fmt.Println(dhtNode.succ[0] + "<- succ :" + dhtNode.nodeId + ": pred -> " + dhtNode.pred[0] + "\n")
 	} else {
 		go dhtNode.transport.send(createMsg("join", msg.Key, sender, dhtNode.succ[1], msg.Origin))
@@ -103,6 +110,7 @@ func (dhtNode *DHTNode) reconnNodes(msg *Msg) {
 		}
 		dhtNode.pred[0] = msg.Key
 		mutex.Unlock()
+		//dhtNode.transport.send(createMsg("ack", dhtNode.nodeId, "placeholder", msg.Src, msg.Origin))
 		fmt.Println(dhtNode.nodeId + "> Reconnected predecessor, " + msg.Key + "\n")
 	case "succ":
 		mutex.Lock()
