@@ -29,11 +29,7 @@ func (transport *Transport) processMsg() {
 			select {
 			case m := <-transport.queue:
 				switch m.Type {
-				case "ack":
-					transport.node.wg.Done()
-					fmt.Println("ACK")
-					//transport.node.Ack()
-				case "join", "init":
+				case "join", "init", "ack":
 					transport.node.nodeJoin(m)
 				case "pred", "succ":
 					transport.node.reconnNodes(m)
@@ -62,7 +58,7 @@ func (transport *Transport) listen() {
 		msg := Msg{}
 		err = dec.Decode(&msg) //decodes the message where the message adress is and adds an error msg if there's none.
 		//fmt.Println(transport.bindAddress + "> Received Message from " + msg.Src)
-		fmt.Println(msg)
+		//fmt.Println(msg)
 		transport.queue <- &msg
 
 		//return

@@ -20,7 +20,6 @@ type DHTNode struct {
 	fingers     *FingerTable
 	contact     Contact
 	transport   *Transport
-	wg          sync.WaitGroup
 }
 
 func (dhtNode DHTNode) helloWorld(t, address string, wg *sync.WaitGroup) {
@@ -36,7 +35,6 @@ func makeDHTNode(nodeId *string, ip string, port string) *DHTNode {
 	dhtNode.contact.port = port
 	dhtNode.succ = [2]string{}
 	dhtNode.pred = [2]string{}
-	dhtNode.wg = sync.WaitGroup{}
 	if nodeId == nil {
 		genNodeId := generateNodeId()
 		dhtNode.nodeId = genNodeId
@@ -60,10 +58,6 @@ func (dhtNode *DHTNode) startServer(wg *sync.WaitGroup) {
 
 }
 
-func (dhtNode *DHTNode) Ack() {
-	dhtNode.wg.Done()
-}
-
 func (dhtNode *DHTNode) nodeJoin(msg *Msg) {
 	//var wg sync.WaitGroup
 	var result bool
@@ -78,23 +72,22 @@ func (dhtNode *DHTNode) nodeJoin(msg *Msg) {
 		dhtNode.pred[0] = msg.Key
 		fmt.Println(dhtNode.succ[0] + "<- succ :" + dhtNode.nodeId + ": pred -> " + dhtNode.pred[0] + "\n")
 		if msg.Type == "init" {
-			msg := createInitMsg(dhtNode.nodeId, sender, msg.Src) // RACE CONDITION?
+			msg := createMsg("ack", dhtNode.nodeId, sender, msg.Src, msg.Origin) // RACE CONDITION?
 			dhtNode.transport.send(msg)
-		} else if msg.Origin != msg.Dst {
+		} else if msg.Type == "ack" {
 			fmt.Println("Ring initiated")
 
 		}
-	} else if result == true && dhtNode.succ[1] != "" && dhtNode.pred[1] != "" {
-
+	} else if result == true && dhtNode.succ[1] != "" && dhtNode.pred[1] != "" && msg.Type == "join" {
 		dhtNode.transport.send(createMsg("pred", msg.Key, sender, dhtNode.succ[1], msg.Origin))
 
-		dhtNode.transport.send(createMsg("succ", dhtNode.succ[0], sender, msg.Origin, msg.Src))
+		dhtNode.transport.send(createMsg("succ", dhtNode.succ[0], sender, msg.Origin, dhtNode.succ[1]))
 		dhtNode.succ[1] = msg.Origin
 		dhtNode.succ[0] = msg.Key
-		dhtNode.transport.send(createMsg("pred", dhtNode.nodeId, sender, msg.Src, sender))
+		dhtNode.transport.send(createMsg("pred", dhtNode.nodeId, sender, msg.Origin, sender))
 		fmt.Println(dhtNode.succ[0] + "<- succ :" + dhtNode.nodeId + ": pred -> " + dhtNode.pred[0] + "\n")
 	} else {
-		go dhtNode.transport.send(createMsg("join", msg.Key, sender, dhtNode.succ[1], msg.Origin))
+		dhtNode.transport.send(createMsg("join", msg.Key, sender, dhtNode.succ[1], msg.Origin))
 	}
 }
 
@@ -103,9 +96,11 @@ func (dhtNode *DHTNode) reconnNodes(msg *Msg) {
 	switch msg.Type {
 	case "pred":
 		mutex.Lock()
-		if msg.Src == msg.Src {
+		if msg.Src == msg.Origin {
+			dhtNode.pred[0] = msg.Key
 			dhtNode.pred[1] = msg.Src
 		} else {
+			dhtNode.pred[0] = msg.Key
 			dhtNode.pred[1] = msg.Origin
 		}
 		dhtNode.pred[0] = msg.Key
@@ -114,15 +109,18 @@ func (dhtNode *DHTNode) reconnNodes(msg *Msg) {
 		fmt.Println(dhtNode.nodeId + "> Reconnected predecessor, " + msg.Key + "\n")
 	case "succ":
 		mutex.Lock()
-		if msg.Src == msg.Src {
+		if msg.Src == msg.Origin {
+			dhtNode.succ[0] = msg.Key
 			dhtNode.succ[1] = msg.Src
 		} else {
+			dhtNode.succ[0] = msg.Key
 			dhtNode.succ[1] = msg.Origin
 		}
 		dhtNode.succ[0] = msg.Key
 		mutex.Unlock()
 		fmt.Println(dhtNode.nodeId + "> Reconnected successor, " + msg.Key + "\n")
 	}
+	//fmt.Println(dhtNode)
 }
 
 func (dhtNode *DHTNode) netPrintRing(msg *Msg) {

@@ -63,7 +63,7 @@ func TestNetwork(t *testing.T) {
 	//
 
 	node3.joinRing(node1, &wg)
-	/*S
+
 	node4.joinRing(node1, &wg)
 
 	node5.joinRing(node1, &wg)
