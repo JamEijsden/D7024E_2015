@@ -1,7 +1,7 @@
 package dht
 
 import (
-	"encoding/hex"
+	//"encoding/hex"
 	"fmt"
 	"sync"
 )
@@ -12,17 +12,15 @@ type Contact struct {
 }
 
 type DHTNode struct {
-	nodeId      string
-	successor   *DHTNode
-	predecessor *DHTNode
-	pred        [2]string
-	succ        [2]string
-	fingers     *FingerTable
-	contact     Contact
-	transport   *Transport
+	nodeId    string
+	pred      [2]string
+	succ      [2]string
+	fingers   *FingerTable
+	contact   Contact
+	transport *Transport
 }
 
-func (dhtNode DHTNode) helloWorld(t, address string, wg *sync.WaitGroup) {
+func (dhtNode DHTNode) sendMsg(t, address string, wg *sync.WaitGroup) {
 
 	defer wg.Done()
 	msg := createMsg(t, dhtNode.nodeId, dhtNode.contact.ip+":"+dhtNode.contact.port, address, dhtNode.contact.ip+":"+dhtNode.contact.port)
@@ -41,11 +39,9 @@ func makeDHTNode(nodeId *string, ip string, port string) *DHTNode {
 	} else {
 		dhtNode.nodeId = *nodeId
 	}
-	dhtNode.successor = nil
-	dhtNode.predecessor = nil
 
 	dhtNode.fingers = new(FingerTable)
-	dhtNode.fingers.fingerList = [BITS]*DHTNode{}
+	dhtNode.fingers.fingerList = [BITS]*Finger{}
 	bindAdr := (dhtNode.contact.ip + ":" + dhtNode.contact.port)
 	dhtNode.transport = CreateTransport(dhtNode, bindAdr)
 	go dhtNode.transport.processMsg()
@@ -65,6 +61,7 @@ func (dhtNode *DHTNode) nodeJoin(msg *Msg) {
 	if dhtNode.succ[0] != "" {
 		result = between([]byte(dhtNode.nodeId), []byte(dhtNode.succ[0]), []byte(msg.Key))
 	}
+	//Initiate ring if main node doesnt have connections
 	if dhtNode.succ[0] == "" && dhtNode.pred[0] == "" {
 		dhtNode.succ[1] = msg.Src
 		dhtNode.pred[1] = msg.Src
@@ -78,6 +75,7 @@ func (dhtNode *DHTNode) nodeJoin(msg *Msg) {
 			fmt.Println("Ring initiated")
 
 		}
+		//Connect and reconnect succ/pred when node joins.
 	} else if result == true && dhtNode.succ[1] != "" && dhtNode.pred[1] != "" && msg.Type == "join" {
 		dhtNode.transport.send(createMsg("pred", msg.Key, sender, dhtNode.succ[1], msg.Origin))
 
@@ -105,8 +103,7 @@ func (dhtNode *DHTNode) reconnNodes(msg *Msg) {
 		}
 		dhtNode.pred[0] = msg.Key
 		mutex.Unlock()
-		//dhtNode.transport.send(createMsg("ack", dhtNode.nodeId, "placeholder", msg.Src, msg.Origin))
-		fmt.Println(dhtNode.nodeId + "> Reconnected predecessor, " + msg.Key + "\n")
+	//	fmt.Println(dhtNode.nodeId + "> Reconnected predecessor, " + msg.Key + "\n")
 	case "succ":
 		mutex.Lock()
 		if msg.Src == msg.Origin {
@@ -118,7 +115,7 @@ func (dhtNode *DHTNode) reconnNodes(msg *Msg) {
 		}
 		dhtNode.succ[0] = msg.Key
 		mutex.Unlock()
-		fmt.Println(dhtNode.nodeId + "> Reconnected successor, " + msg.Key + "\n")
+		//	fmt.Println(dhtNode.nodeId + "> Reconnected successor, " + msg.Key + "\n")
 	}
 	//fmt.Println(dhtNode)
 }
@@ -135,141 +132,35 @@ func (dhtNode *DHTNode) netPrintRing(msg *Msg) {
 	}
 }
 
-/***************************************************** WITHOUT NETWORK, ONLY LOCAL *********************************************/
-
-func testBetween(id1, id2, key string) {
-	fmt.Println(id1 + " " + id2 + " " + key + " ")
-	fmt.Println(between([]byte(id1), []byte(id2), []byte(key)))
-}
-
-// Connects and rearranges nodes
-func (dhtNode *DHTNode) addToRing(newDHTNode *DHTNode) {
-	// Two first nodes
-	var result bool
-
-	if dhtNode.successor != nil {
-		result = between([]byte(dhtNode.nodeId), []byte(dhtNode.successor.nodeId), []byte(newDHTNode.nodeId))
-	}
-	//Initiation of ring, 2 node ring
-	if dhtNode.successor == nil && dhtNode.predecessor == nil {
-		//fmt.Println("\n-> changes done to ring: ")
-		dhtNode.successor = newDHTNode
-		dhtNode.predecessor = newDHTNode
-		newDHTNode.successor = dhtNode
-		newDHTNode.predecessor = dhtNode
-		//fmt.Println(dhtNode.nodeId + "-> s " + dhtNode.successor.nodeId)
-		//fmt.Println(newDHTNode.nodeId + "-> s " + newDHTNode.successor.nodeId + "\n")
-		dhtNode.fingers.fingerList = findFingers(dhtNode)
-		newDHTNode.fingers.fingerList = findFingers(newDHTNode)
-		dhtNode.stabilize(dhtNode.nodeId)
-		newDHTNode.stabilize(newDHTNode.nodeId)
-
-		// Connecting last node with first(6 -> 7 -> 0)
-	} else if result == true && dhtNode.successor != nil && dhtNode.predecessor != nil {
-		dhtNode.successor.predecessor = newDHTNode
-		newDHTNode.successor = dhtNode.successor
-		dhtNode.successor = newDHTNode
-		newDHTNode.predecessor = dhtNode
-		//fmt.Println(dhtNode.nodeId + "-> s " + dhtNode.successor.nodeId)
-		//fmt.Println(newDHTNode.nodeId + "-> s " + newDHTNode.successor.nodeId + "\n")
-		newDHTNode.fingers.fingerList = findFingers(newDHTNode)
-		newDHTNode.stabilize(newDHTNode.nodeId)
-	} else {
-		dhtNode.successor.addToRing(newDHTNode)
-	}
-
-}
-
-func (dhtNode *DHTNode) lookup(key string) *DHTNode { /* *DHTNode  */
-
+func (dhtNode *DHTNode) lookup(key string) *Finger {
+	src := dhtNode.contact.ip + ":" + dhtNode.contact.port
 	if dhtNode.responsible(key) {
 		//fmt.Println(dhtNode.nodeId)
-		return dhtNode
+		return &Finger{dhtNode.nodeId, src}
 	} else {
-
-		return dhtNode.successor.lookup(key)
+		// send here
+		dhtNode.transport.send(createMsg("lookup", key, src, dhtNode.succ[1], src))
+		//return dhtNode.successor.lookup(key)
+		return dhtNode.fingers.fingerList[0]
 	}
 }
 
-func (dhtNode *DHTNode) acceleratedLookupUsingFingerTable(key string) *DHTNode {
-	if dhtNode.responsible(key) {
-		return dhtNode
-	} else {
-		length := len(dhtNode.fingers.fingerList) - 1
-		temp := length //length of list
-		for temp >= 0 {
-			//fmt.Println(dhtNode.nodeId + " - finger: " + dhtNode.fingers.fingerList[temp].nodeId)
-			//fmt.Println(temp)
-			if between([]byte(dhtNode.nodeId), []byte(dhtNode.fingers.fingerList[temp].nodeId), []byte(key)) { //check if nodeId and it's last finger is between the key
-				if dhtNode.successor.nodeId == dhtNode.fingers.fingerList[temp].nodeId && temp == 0 {
-					return dhtNode.successor
-				}
-				temp = temp - 1
-				//fmt.Println(temp)
-			} else {
-				//fmt.Println("change node: " + dhtNode.fingers.fingerList[temp].nodeId)
-				return dhtNode.fingers.fingerList[temp].acceleratedLookupUsingFingerTable(key)
-			}
-		}
+func (dhtNode *DHTNode) lookupForward(msg *Msg) {
+	if dhtNode.responsible(msg.Key) {
+		dhtNode.transport.send(createMsg("lookup_found", k, s, d, o))
 	}
-	return dhtNode
+
 }
 
 func (dhtNode *DHTNode) responsible(key string) bool {
 
 	if dhtNode.nodeId == key {
 		return true
-	} else if dhtNode.predecessor.nodeId == key {
+	} else if dhtNode.pred[0] == key {
 		return false
 	}
-	isResponsible := between([]byte(dhtNode.predecessor.nodeId), []byte(dhtNode.nodeId), []byte(key))
+	isResponsible := between([]byte(dhtNode.pred[0]), []byte(dhtNode.nodeId), []byte(key))
 	return isResponsible
 }
 
-func (dhtNode *DHTNode) printRing() {
-	fmt.Println(dhtNode.nodeId)
-	printRingHelper(dhtNode, dhtNode.successor)
-	fmt.Println("->done\n")
-
-}
-func printRingHelper(start *DHTNode, n *DHTNode) {
-	if start.nodeId != n.nodeId {
-		fmt.Println(n.nodeId)
-		printRingHelper(start, n.successor)
-	}
-}
-
-func (dhtNode *DHTNode) stabilize(start string) {
-	if dhtNode.successor.nodeId != start {
-		//	fmt.Println(dhtNode.successor.nodeId + " NODELIST: ")
-		//	fmt.Println("FUCK MY LIFE IM STOOPID " + dhtNode.successor.nodeId)
-		test := updateFingers(dhtNode.successor)
-		for i := 0; i < 3; i++ {
-			if test[i] != nil {
-
-				//			fmt.Print(test[i].nodeId + " ")
-			}
-		}
-		//	fmt.Println("")
-		dhtNode.successor.stabilize(start)
-	}
-	/*
-		fmt.Println(dhtNode.nodeId)
-		fmt.Print(dhtNode.fingers.fingerList[0].nodeId + " ")
-		fmt.Print(dhtNode.fingers.fingerList[1].nodeId + " ")
-		fmt.Print(dhtNode.fingers.fingerList[2].nodeId + " \n")
-	*/
-	/* interate through every node in system
-	call func updateFingers() to update current node. */
-}
-
-func (dhtNode *DHTNode) printFingers(m int, bits int) {
-	idBytes, _ := hex.DecodeString(dhtNode.nodeId)
-	fingerHex, _ := calcFinger(idBytes, m, bits)
-	fingerSuccessor := dhtNode.lookup(fingerHex)
-	fingerSuccessorBytes, _ := hex.DecodeString(fingerSuccessor.nodeId)
-	//fmt.Println("From testCalcFingerTable\nsuccessor    " + fingerSuccessor.nodeId)
-
-	dist := distance(idBytes, fingerSuccessorBytes, bits)
-	fmt.Println("distance     " + dist.String())
-}
+/***************************************************** WITHOUT NETWORK, ONLY LOCAL *********************************************/

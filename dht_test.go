@@ -12,12 +12,15 @@ func (node *DHTNode) joinRing(dhtNode *DHTNode, wg *sync.WaitGroup) {
 	if dhtNode.succ[0] == "" {
 		//Initiate ring
 		wg.Add(1)
-		go node.helloWorld("init", rec, wg)
+		go node.sendMsg("init", rec, wg)
 		wg.Wait()
 		time.Sleep(time.Second * 1)
+		if node.succ[0] == "" {
+			node.joinRing(dhtNode, wg)
+		}
 	} else {
 		wg.Add(1)
-		go node.helloWorld("join", rec, wg)
+		go node.sendMsg("join", rec, wg)
 		wg.Wait()
 	}
 }
@@ -46,7 +49,16 @@ func TestNetwork(t *testing.T) {
 	node6 := makeDHTNode(&id6, "localhost", "1116")
 	node7 := makeDHTNode(&id7, "localhost", "1117")
 	node8 := makeDHTNode(&id8, "localhost", "1118")
-	//	node9 := makeDHTNode(nil, "localhost", "1119")
+	/*
+		node1 := makeDHTNode(nil, "localhost", "1111")
+		node2 := makeDHTNode(nil, "localhost", "1112")
+		node3 := makeDHTNode(nil, "localhost", "1113")
+		node4 := makeDHTNode(nil, "localhost", "1114")
+		node5 := makeDHTNode(nil, "localhost", "1115")
+		node6 := makeDHTNode(nil, "localhost", "1116")
+		node7 := makeDHTNode(nil, "localhost", "1117")
+		node8 := makeDHTNode(nil, "localhost", "1118")
+	*/ //	node9 := makeDHTNode(nil, "localhost", "1119")
 	wg.Add(7)
 	go node1.startServer(&wg)
 	go node2.startServer(&wg)
@@ -62,11 +74,11 @@ func TestNetwork(t *testing.T) {
 
 	//
 
-	node3.joinRing(node1, &wg)
+	//node3.joinRing(node1, &wg)
 
 	node4.joinRing(node1, &wg)
 
-	node5.joinRing(node1, &wg)
+	//node5.joinRing(node1, &wg)
 
 	node6.joinRing(node1, &wg)
 
@@ -107,7 +119,7 @@ func TestNetwork(t *testing.T) {
 	} */
 }
 
-/* run with go test -test.run TestDHT1 */
+/* run with go test -test.run TestDHT1
 
 func TestDHT1(t *testing.T) {
 	id0 := "00"
@@ -191,4 +203,4 @@ func TestDHT2(t *testing.T) {
 	fmt.Println("dht node " + nodeForKey2.nodeId + " running at " + nodeForKey2.contact.ip + ":" + nodeForKey2.contact.port + " is responsible for " + key2)
 	nodeForKey3 := node1.acceleratedLookupUsingFingerTable(key3)
 	fmt.Println("dht node " + nodeForKey3.nodeId + " running at " + nodeForKey3.contact.ip + ":" + nodeForKey3.contact.port + " is responsible for " + key3)
-}
+}*/
