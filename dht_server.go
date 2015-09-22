@@ -38,6 +38,10 @@ func (transport *Transport) processMsg() {
 				case "lookup_found":
 					go transport.node.found(&Finger{m.Key, m.Src})
 					//fmt.Println(&Finger{m.Key, m.Src})
+				case "stabilize":
+					transport.node.stabilizeForward(m)
+				case "fingers":
+					go transport.node.setFingers()
 				}
 			}
 		}

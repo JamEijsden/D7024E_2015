@@ -74,18 +74,17 @@ func TestNetwork(t *testing.T) {
 
 	//
 
-	//	node3.joinRing(node1, &wg)
+	node3.joinRing(node1, &wg)
 
-	node4.joinRing(node1, &wg)
+	//node4.joinRing(node1, &wg)
 
 	//	node5.joinRing(node1, &wg)
 
-	node6.joinRing(node1, &wg)
+	//node6.joinRing(node1, &wg)
 
-	node7.joinRing(node1, &wg)
+	//node7.joinRing(node1, &wg)
 
 	time.Sleep(time.Second * 1)
-	findFingers(node1)
 
 	fmt.Println(node1.contact.port + "> " + node1.pred[0] + " " + node1.succ[0])
 	fmt.Println(node2.contact.port + "> " + node2.pred[0] + " " + node2.succ[0])
@@ -94,6 +93,7 @@ func TestNetwork(t *testing.T) {
 	fmt.Println(node5.contact.port + "> " + node5.pred[0] + " " + node5.succ[0])
 	fmt.Println(node6.contact.port + "> " + node6.pred[0] + " " + node6.succ[0])
 	fmt.Println(node7.contact.port + "> " + node7.pred[0] + " " + node7.succ[0])
+	updateFingers(node1)
 
 	//node1.netPrintRing(nil)
 
