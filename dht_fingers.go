@@ -43,6 +43,8 @@ func findFingers(dhtNode *DHTNode) *FingerTable {
 		//fmt.Print(nodes[i].nodeId + " ")
 	}
 	//ft.fingerList = nodes
+	fmt.Print("Firstlist yo: ")
+	fmt.Println(FingerTable{nodes})
 	return &FingerTable{nodes}
 }
 

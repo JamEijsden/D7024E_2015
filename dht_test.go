@@ -86,6 +86,7 @@ func TestNetwork(t *testing.T) {
 
 	time.Sleep(time.Second * 1)
 	findFingers(node1)
+	node1.fingerLookup("06")
 
 	fmt.Println(node1.contact.port + "> " + node1.pred[0] + " " + node1.succ[0])
 	fmt.Println(node2.contact.port + "> " + node2.pred[0] + " " + node2.succ[0])
