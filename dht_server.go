@@ -40,6 +40,10 @@ func (transport *Transport) processMsg() {
 					//fmt.Println(&Finger{m.Key, m.Src})
 				case "lookup_finger":
 					transport.node.fingerForward(m)
+				case "stabilize":
+					transport.node.stabilizeForward(m)
+				case "fingers":
+					go transport.node.setFingers()
 				}
 			}
 		}

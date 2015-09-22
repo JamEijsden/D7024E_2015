@@ -60,7 +60,7 @@ func (dhtNode *DHTNode) startServer(wg *sync.WaitGroup) {
 
 /************************ NODEJOIN *****************************************/
 func (dhtNode *DHTNode) nodeJoin(msg *Msg) {
-	//var wg sync.WaitGroup
+	//	var wg sync.WaitGroup
 	var result bool
 	sender := dhtNode.contact.ip + ":" + dhtNode.contact.port
 	if dhtNode.succ[0] != "" {
@@ -72,6 +72,10 @@ func (dhtNode *DHTNode) nodeJoin(msg *Msg) {
 		dhtNode.pred[1] = msg.Src
 		dhtNode.succ[0] = msg.Key
 		dhtNode.pred[0] = msg.Key
+		go func() {
+			dhtNode.fingers = findFingers(dhtNode)
+			dhtNode.stabilize()
+		}()
 		fmt.Println(dhtNode.succ[0] + "<- succ :" + dhtNode.nodeId + ": pred -> " + dhtNode.pred[0] + "\n")
 		if msg.Type == "init" {
 			msg := createMsg("ack", dhtNode.nodeId, sender, msg.Src, msg.Origin) // RACE CONDITION?
@@ -83,15 +87,16 @@ func (dhtNode *DHTNode) nodeJoin(msg *Msg) {
 		//Connect and reconnect succ/pred when node joins.
 	} else if result == true && dhtNode.succ[1] != "" && dhtNode.pred[1] != "" && msg.Type == "join" {
 		dhtNode.transport.send(createMsg("pred", msg.Key, sender, dhtNode.succ[1], msg.Origin))
-
 		dhtNode.transport.send(createMsg("succ", dhtNode.succ[0], sender, msg.Origin, dhtNode.succ[1]))
 		dhtNode.succ[1] = msg.Origin
 		dhtNode.succ[0] = msg.Key
 		dhtNode.transport.send(createMsg("pred", dhtNode.nodeId, sender, msg.Origin, sender))
 		fmt.Println(dhtNode.succ[0] + "<- succ :" + dhtNode.nodeId + ": pred -> " + dhtNode.pred[0] + "\n")
+		dhtNode.transport.send(createMsg("fingers", dhtNode.nodeId, sender, msg.Origin, sender))
 	} else {
 		dhtNode.transport.send(createMsg("join", msg.Key, sender, dhtNode.succ[1], msg.Origin))
 	}
+	//dhtNode.fingers = findFingers(dhtNode)
 }
 
 func (dhtNode *DHTNode) reconnNodes(msg *Msg) {
@@ -126,7 +131,11 @@ func (dhtNode *DHTNode) reconnNodes(msg *Msg) {
 }
 
 /***************************** LOOOOKUUUUPUPP *************************************/
+func (dhtNode *DHTNode) setFingers() {
+	dhtNode.fingers = findFingers(dhtNode)
+	dhtNode.stabilize()
 
+}
 func (dhtNode *DHTNode) lookup(key string) {
 	src := dhtNode.contact.ip + ":" + dhtNode.contact.port
 	if dhtNode.responsible(key) {
@@ -203,5 +212,20 @@ func (dhtNode *DHTNode) fingerForward(msg *Msg) {
 				dhtNode.transport.send(createMsg("lookup_finger", dhtNode.nodeId, src, dhtNode.fingers.fingerList[temp].address, src))
 			}
 		}
+	}
+}
+
+func (dhtNode *DHTNode) stabilize() {
+	src := dhtNode.contact.ip + ":" + dhtNode.contact.port
+	dhtNode.transport.send(createMsg("stabilize", dhtNode.nodeId, src, dhtNode.succ[1], src))
+}
+
+func (dhtNode *DHTNode) stabilizeForward(msg *Msg) {
+	src := dhtNode.contact.ip + ":" + dhtNode.contact.port
+	//fmt.Println(dhtNode.succ[1] + " " + msg.Origin)
+	go updateFingers(dhtNode)
+	if dhtNode.succ[1] != msg.Origin {
+		dhtNode.transport.send(createMsg("stabilize", dhtNode.nodeId, src, dhtNode.succ[1], msg.Origin))
+>>>>>>> 76cf66b0d2acc8ba4394902e2149a7fe8c4d2d18
 	}
 }
