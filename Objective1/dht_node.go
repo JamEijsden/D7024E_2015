@@ -56,8 +56,6 @@ func (dhtNode *DHTNode) addToRing(newDHTNode *DHTNode) {
 		dhtNode.predecessor = newDHTNode
 		newDHTNode.successor = dhtNode
 		newDHTNode.predecessor = dhtNode
-		//fmt.Println(dhtNode.nodeId + "-> s " + dhtNode.successor.nodeId)
-		//fmt.Println(newDHTNode.nodeId + "-> s " + newDHTNode.successor.nodeId + "\n")
 		dhtNode.fingers.fingerList = findFingers(dhtNode)
 		newDHTNode.fingers.fingerList = findFingers(newDHTNode)
 		dhtNode.stabilize(dhtNode.nodeId)
@@ -69,8 +67,6 @@ func (dhtNode *DHTNode) addToRing(newDHTNode *DHTNode) {
 		newDHTNode.successor = dhtNode.successor
 		dhtNode.successor = newDHTNode
 		newDHTNode.predecessor = dhtNode
-		//fmt.Println(dhtNode.nodeId + "-> s " + dhtNode.successor.nodeId)
-		//fmt.Println(newDHTNode.nodeId + "-> s " + newDHTNode.successor.nodeId + "\n")
 		newDHTNode.fingers.fingerList = findFingers(newDHTNode)
 		newDHTNode.stabilize(newDHTNode.nodeId)
 	} else {

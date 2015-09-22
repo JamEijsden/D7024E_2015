@@ -28,6 +28,8 @@ func (dhtNode DHTNode) sendMsg(t, address string, wg *sync.WaitGroup) {
 	dhtNode.transport.send(msg)
 }
 
+/***************** CREATE NODE ***********************************************/
+
 func makeDHTNode(nodeId *string, ip string, port string) *DHTNode {
 	dhtNode := new(DHTNode)
 	dhtNode.contact.ip = ip
@@ -56,6 +58,7 @@ func (dhtNode *DHTNode) startServer(wg *sync.WaitGroup) {
 
 }
 
+/************************ NODEJOIN *****************************************/
 func (dhtNode *DHTNode) nodeJoin(msg *Msg) {
 	//var wg sync.WaitGroup
 	var result bool
@@ -122,6 +125,8 @@ func (dhtNode *DHTNode) reconnNodes(msg *Msg) {
 	//fmt.Println(dhtNode)
 }
 
+/***************************** LOOOOKUUUUPUPP *************************************/
+
 func (dhtNode *DHTNode) lookup(key string) {
 	src := dhtNode.contact.ip + ":" + dhtNode.contact.port
 	if dhtNode.responsible(key) {
@@ -157,5 +162,3 @@ func (dhtNode *DHTNode) responsible(key string) bool {
 	isResponsible := between([]byte(dhtNode.pred[0]), []byte(dhtNode.nodeId), []byte(key))
 	return isResponsible
 }
-
-/***************************************************** WITHOUT NETWORK, ONLY LOCAL *********************************************/
