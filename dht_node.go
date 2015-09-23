@@ -12,6 +12,11 @@ type Contact struct {
 	port string
 }
 
+type Task struct {
+	Type string
+	M    *Msg
+}
+
 type DHTNode struct {
 	nodeId    string
 	pred      [2]string
@@ -20,26 +25,29 @@ type DHTNode struct {
 	contact   Contact
 	transport *Transport
 	sm        chan *Finger
-	taskQueue chan string
+	taskQueue chan *Task
+	initiated int
 }
 
-func (dhtNode DHTNode) sendMsg(t, address string, wg *sync.WaitGroup) {
+func (dhtNode DHTNode) sendMsg(t, address string) {
 
-	defer wg.Done()
 	msg := createMsg(t, dhtNode.nodeId, dhtNode.contact.ip+":"+dhtNode.contact.port, address, dhtNode.contact.ip+":"+dhtNode.contact.port)
-	dhtNode.transport.send(msg)
+	go dhtNode.transport.send(msg)
 }
 
 /***************** CREATE NODE ***********************************************/
-
+func createTask(s string, m *Msg) *Task {
+	return &Task{s, m}
+}
 func makeDHTNode(nodeId *string, ip string, port string) *DHTNode {
 	dhtNode := new(DHTNode)
 	dhtNode.contact.ip = ip
 	dhtNode.contact.port = port
 	dhtNode.sm = make(chan *Finger)
-	dhtNode.taskQueue = make(chan string)
+	dhtNode.taskQueue = make(chan *Task)
 	dhtNode.succ = [2]string{}
 	dhtNode.pred = [2]string{}
+	dhtNode.initiated = 0
 	if nodeId == nil {
 		genNodeId := generateNodeId()
 		dhtNode.nodeId = genNodeId
@@ -52,6 +60,7 @@ func makeDHTNode(nodeId *string, ip string, port string) *DHTNode {
 	bindAdr := (dhtNode.contact.ip + ":" + dhtNode.contact.port)
 	dhtNode.transport = CreateTransport(dhtNode, bindAdr)
 	go dhtNode.transport.processMsg()
+	go dhtNode.worker()
 
 	return dhtNode
 }
@@ -61,57 +70,98 @@ func (dhtNode *DHTNode) startServer(wg *sync.WaitGroup) {
 
 }
 
-/************************ NODEJOIN *****************************************/
-func (dhtNode *DHTNode) nodeJoin(msg *Msg) {
-	var mutex = &sync.Mutex{}
-	//	var wg sync.WaitGroup
+func (dhtNode *DHTNode) initRing(msg *Msg) {
+	sender := dhtNode.contact.ip + ":" + dhtNode.contact.port
+	//func initNode()
+	dhtNode.succ[1] = msg.Src
+	dhtNode.pred[1] = msg.Src
+	dhtNode.succ[0] = msg.Key
+	dhtNode.pred[0] = msg.Key
+	fmt.Println(dhtNode)
+	/*go func() {
+		dhtNode.fingers = findFingers(dhtNode)
+		//dhtNode.stabilize()
+	}()*/
+	//fmt.Println(dhtNode.succ[0] + "<- succ :" + dhtNode.nodeId + ": pred -> " + dhtNode.pred[0] + "\n")
+	/*fmt.Print("initRing msg Type: ")--------
+	fmt.Println(msg.Type) // denna är alltid request */
+	//Här måste vi ändra msg.Type skulle jag tro. Eller i queueTask skiten.
+
+	if msg.Type == "request" {
+		msg := createMsg("init", dhtNode.nodeId, sender, msg.Src, msg.Origin) // RACE CONDITION?
+		go dhtNode.transport.send(msg)
+	} else if msg.Type == "init" {
+		fmt.Println("Ring initiated\n")
+
+		//		dhtNode.QueueTask(createTask("print", nil))
+	}
+
+}
+
+func (dhtNode *DHTNode) printRing(msg *Msg) {
+	src := dhtNode.contact.ip + ":" + dhtNode.contact.port
+	if msg.Type == "" {
+		fmt.Println(dhtNode)
+		dhtNode.transport.send(createMsg("print", "", src, dhtNode.succ[1], src))
+	} else if src != msg.Origin {
+		fmt.Println(dhtNode)
+		dhtNode.transport.send(createMsg("print", "", src, dhtNode.succ[1], msg.Origin))
+
+	} else {
+		fmt.Println("End of ring")
+	}
+}
+
+func (dhtNode *DHTNode) joinRing(msg *Msg) {
 	var result bool
-	//var done int
 	sender := dhtNode.contact.ip + ":" + dhtNode.contact.port
 	if dhtNode.succ[0] != "" {
 		result = between([]byte(dhtNode.nodeId), []byte(dhtNode.succ[0]), []byte(msg.Key))
 	}
-	//Initiate ring if main node doesnt have connections
-	if dhtNode.succ[0] == "" && dhtNode.pred[0] == "" {
-		dhtNode.succ[1] = msg.Src
-		dhtNode.pred[1] = msg.Src
-		dhtNode.succ[0] = msg.Key
-		dhtNode.pred[0] = msg.Key
-		go func() {
-			dhtNode.fingers = findFingers(dhtNode)
-			//dhtNode.stabilize()
-		}()
-		//fmt.Println(dhtNode.succ[0] + "<- succ :" + dhtNode.nodeId + ": pred -> " + dhtNode.pred[0] + "\n")
-		if msg.Type == "init" {
-			msg := createMsg("ack", dhtNode.nodeId, sender, msg.Src, msg.Origin) // RACE CONDITION?
-			dhtNode.transport.send(msg)
-		} else if msg.Type == "ack" {
-			fmt.Println("Ring initiated")
-
-		}
-		//Connect and reconnect succ/pred when node joins.
-	} else if result == true && dhtNode.succ[1] != "" && dhtNode.pred[1] != "" && msg.Type == "join" {
+	/*fmt.Println("We made it to before 2nd if")
+	fmt.Println(result)
+	fmt.Println(msg.Type)
+	fmt.Println(dhtNode.succ[1])
+	fmt.Println(dhtNode.pred[1])
+	*/ //Connect and reconnect succ/pred when node joins.
+	if result == true && dhtNode.succ[1] != "" && dhtNode.pred[1] != "" && msg.Type == "join" {
 		dhtNode.transport.send(createMsg("pred", msg.Key, sender, dhtNode.succ[1], msg.Origin))
 		dhtNode.transport.send(createMsg("succ", dhtNode.succ[0], sender, msg.Origin, dhtNode.succ[1]))
-		mutex.Lock()
+		//mutex.Lock()
 		dhtNode.succ[1] = msg.Origin
 		dhtNode.succ[0] = msg.Key
-		mutex.Unlock()
+		//mutex.Unlock()
 		dhtNode.transport.send(createMsg("pred", dhtNode.nodeId, sender, msg.Origin, sender))
-		//fmt.Println(dhtNode.succ[0] + "<- succ :" + dhtNode.nodeId + ": pred -> " + dhtNode.pred[0] + "\n")
+		fmt.Println(dhtNode.succ[0] + "<- succ :" + dhtNode.nodeId + ": pred -> " + dhtNode.pred[0] + "\n")
 		time.Sleep(time.Second * 1)
-		dhtNode.transport.send(createMsg("fingers", dhtNode.nodeId, sender, msg.Origin, sender))
+		//dhtNode.transport.send(createMsg("fingers", dhtNode.nodeId, sender, msg.Origin, sender))
 	} else {
 		dhtNode.transport.send(createMsg("join", msg.Key, sender, dhtNode.succ[1], msg.Origin))
 	}
+}
+
+/************************ NODEJOIN *****************************************/
+func (dhtNode *DHTNode) nodeJoin(msg *Msg) {
+	//	var wg sync.WaitGroup
+	//Initiate ring if main node doesnt have connections
+	if dhtNode.succ[0] == "" && dhtNode.pred[0] == "" && dhtNode.initiated != 1 {
+		dhtNode.initiated = 1
+		fmt.Println("Beginning init..")
+		go dhtNode.QueueTask(createTask("init", msg))
+
+		//KLAR ^
+	} else {
+		fmt.Println("Beginning join..") //onändlig loop, msg.Type är alltid request i queueTask.
+		msg.Type = "join"
+		go dhtNode.QueueTask(createTask("join", msg))
+	}
+
 	//dhtNode.fingers = findFingers(dhtNode)
 }
 
 func (dhtNode *DHTNode) reconnNodes(msg *Msg) {
-	mutex := &sync.Mutex{}
 	switch msg.Type {
 	case "pred":
-		mutex.Lock()
 		if msg.Src == msg.Origin {
 			dhtNode.pred[0] = msg.Key
 			dhtNode.pred[1] = msg.Src
@@ -120,10 +170,10 @@ func (dhtNode *DHTNode) reconnNodes(msg *Msg) {
 			dhtNode.pred[1] = msg.Origin
 		}
 		dhtNode.pred[0] = msg.Key
-		mutex.Unlock()
+
 	//	fmt.Println(dhtNode.nodeId + "> Reconnected predecessor, " + msg.Key + "\n")
 	case "succ":
-		mutex.Lock()
+
 		if msg.Src == msg.Origin {
 			dhtNode.succ[0] = msg.Key
 			dhtNode.succ[1] = msg.Src
@@ -132,7 +182,6 @@ func (dhtNode *DHTNode) reconnNodes(msg *Msg) {
 			dhtNode.succ[1] = msg.Origin
 		}
 		dhtNode.succ[0] = msg.Key
-		mutex.Unlock()
 		//	fmt.Println(dhtNode.nodeId + "> Reconnected successor, " + msg.Key + "\n")
 	}
 	//fmt.Println(dhtNode)
@@ -234,5 +283,41 @@ func (dhtNode *DHTNode) stabilizeForward(msg *Msg) {
 	go updateFingers(dhtNode)
 	if dhtNode.succ[1] != msg.Origin {
 		dhtNode.transport.send(createMsg("stabilize", dhtNode.nodeId, src, dhtNode.succ[1], msg.Origin))
+	}
+}
+
+func (dhtNode *DHTNode) QueueTask(t *Task) {
+	/*fmt.Print("Adding ")
+	fmt.Print(t.M.Src + " ")
+	fmt.Print(t)
+	fmt.Println(" to queue")
+	*/dhtNode.taskQueue <- t
+}
+
+func (dhtNode *DHTNode) worker() {
+	for {
+		select {
+		case t := <-dhtNode.taskQueue:
+			switch t.Type {
+			case "join":
+				//fmt.Println("Exe join")
+				if t.M.Type == "request" {
+					dhtNode.nodeJoin(t.M)
+				} else {
+					dhtNode.joinRing(t.M)
+				}
+			case "init":
+				//fmt.Println("Exe init")
+				dhtNode.initRing(t.M)
+				time.Sleep(time.Millisecond * 200)
+			case "reconn":
+				dhtNode.reconnNodes(t.M)
+			case "findFingers":
+				fmt.Println("FINGERS!")
+			case "print":
+
+				dhtNode.printRing(t.M)
+			}
+		}
 	}
 }

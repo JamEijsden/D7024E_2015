@@ -29,10 +29,15 @@ func (transport *Transport) processMsg() {
 			select {
 			case m := <-transport.queue:
 				switch m.Type {
-				case "join", "init", "ack":
-					transport.node.nodeJoin(m)
+
+				case "init":
+					//fmt.Println(transport.node.nodeId + " INITING")
+					go transport.node.QueueTask(createTask("init", m))
+				case "join", "request":
+					//fmt.Println("Exe join")
+					go transport.node.QueueTask(createTask("join", m))
 				case "pred", "succ":
-					transport.node.reconnNodes(m)
+					go transport.node.QueueTask(createTask("reconn", m))
 				case "lookup":
 					transport.node.lookupForward(m)
 				case "lookup_found":
@@ -43,8 +48,10 @@ func (transport *Transport) processMsg() {
 				case "stabilize":
 					transport.node.stabilizeForward(m)
 				case "fingers":
-					transport.node.taskQueue <- "findFingers"
-
+					transport.node.QueueTask(createTask("findFingers", nil))
+					fmt.Println("task queue")
+				case "print":
+					go transport.node.QueueTask(createTask("print", m))
 				}
 			}
 		}
@@ -74,7 +81,7 @@ func (transport *Transport) listen() {
 }
 
 func (transport *Transport) send(msg *Msg) {
-	//fmt.Println(msg.Src + "> Type: " + msg.Key + " " + msg.Type + " to " + msg.Dst)
+	fmt.Println(msg.Src + "> Type: " + msg.Key + " " + msg.Type + " to " + msg.Dst)
 	udpAddr, err := net.ResolveUDPAddr("udp", msg.Dst)
 	if err != nil {
 		fmt.Println(err.Error())

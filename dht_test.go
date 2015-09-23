@@ -7,22 +7,14 @@ import (
 	"time"
 )
 
-func (node *DHTNode) joinRing(dhtNode *DHTNode, wg *sync.WaitGroup) {
+func (node *DHTNode) joinRequest(dhtNode *DHTNode) {
 	rec := dhtNode.contact.ip + ":" + dhtNode.contact.port
-	if dhtNode.succ[0] == "" {
-		//Initiate ring
-		wg.Add(1)
-		go node.sendMsg("init", rec, wg)
-		wg.Wait()
-		time.Sleep(time.Second * 1)
-		if node.succ[0] == "" {
-			node.joinRing(dhtNode, wg)
-		}
-	} else {
-		wg.Add(1)
-		go node.sendMsg("join", rec, wg)
-		wg.Wait()
+	go node.sendMsg("request", rec)
+	time.Sleep(time.Nanosecond * 100)
+	if node.succ[1] != "" {
+		go node.sendMsg("request", rec)
 	}
+
 }
 
 func initiateRing() {
@@ -70,21 +62,22 @@ func TestNetwork(t *testing.T) {
 	wg.Wait()
 
 	//joinRing(node1, &wg)
-	node2.joinRing(node1, &wg)
+	node2.joinRequest(node1)
 
 	//
 
-	node3.joinRing(node1, &wg)
+	node3.joinRequest(node1)
 
-	node4.joinRing(node1, &wg)
+	node4.joinRequest(node1)
 
-	//node5.joinRing(node1, &wg)
+	node5.joinRequest(node1)
 
-	//node6.joinRing(node1, &wg)
+	node6.joinRequest(node1)
 
-	//node7.joinRing(node1, &wg)
+	node7.joinRequest(node1)
 
-	time.Sleep(time.Second * 1)
+	//time.Sleep(time.Millisecond * 5000)
+	//node1.QueueTask(createTask("print", createMsg("", "", "1", "", "")))
 	//findFingers(node1)
 	//printFingers(findFingers(node2))
 	//printFingers(node2.fingers)
