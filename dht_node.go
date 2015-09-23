@@ -77,7 +77,9 @@ func (dhtNode *DHTNode) initRing(msg *Msg) {
 	dhtNode.pred[1] = msg.Src
 	dhtNode.succ[0] = msg.Key
 	dhtNode.pred[0] = msg.Key
-	fmt.Println(dhtNode)
+	//fmt.Println(dhtNode)
+	fmt.Println(dhtNode.succ[0] + "<- succ :" + dhtNode.nodeId + ": pred -> " + dhtNode.pred[0] + "\n")
+
 	/*go func() {
 		dhtNode.fingers = findFingers(dhtNode)
 		//dhtNode.stabilize()
@@ -135,8 +137,10 @@ func (dhtNode *DHTNode) joinRing(msg *Msg) {
 		fmt.Println(dhtNode.succ[0] + "<- succ :" + dhtNode.nodeId + ": pred -> " + dhtNode.pred[0] + "\n")
 		time.Sleep(time.Second * 1)
 		//dhtNode.transport.send(createMsg("fingers", dhtNode.nodeId, sender, msg.Origin, sender))
-	} else {
+	} else if dhtNode.succ[1] != "" {
 		dhtNode.transport.send(createMsg("join", msg.Key, sender, dhtNode.succ[1], msg.Origin))
+	} else {
+		go dhtNode.QueueTask(createTask("join", msg))
 	}
 }
 
@@ -147,11 +151,13 @@ func (dhtNode *DHTNode) nodeJoin(msg *Msg) {
 	if dhtNode.succ[0] == "" && dhtNode.pred[0] == "" && dhtNode.initiated != 1 {
 		dhtNode.initiated = 1
 		fmt.Println("Beginning init..")
+		fmt.Println(msg)
 		go dhtNode.QueueTask(createTask("init", msg))
 
 		//KLAR ^
 	} else {
 		fmt.Println("Beginning join..") //onändlig loop, msg.Type är alltid request i queueTask.
+		fmt.Println(msg)
 		msg.Type = "join"
 		go dhtNode.QueueTask(createTask("join", msg))
 	}
@@ -309,7 +315,7 @@ func (dhtNode *DHTNode) worker() {
 			case "init":
 				//fmt.Println("Exe init")
 				dhtNode.initRing(t.M)
-				time.Sleep(time.Millisecond * 200)
+				//time.Sleep(time.Millisecond * 1000)
 			case "reconn":
 				dhtNode.reconnNodes(t.M)
 			case "findFingers":
