@@ -4,6 +4,7 @@ import (
 	//"encoding/hex"
 	"fmt"
 	"sync"
+	"time"
 )
 
 type Contact struct {
@@ -19,6 +20,7 @@ type DHTNode struct {
 	contact   Contact
 	transport *Transport
 	sm        chan *Finger
+	taskQueue chan string
 }
 
 func (dhtNode DHTNode) sendMsg(t, address string, wg *sync.WaitGroup) {
@@ -35,6 +37,7 @@ func makeDHTNode(nodeId *string, ip string, port string) *DHTNode {
 	dhtNode.contact.ip = ip
 	dhtNode.contact.port = port
 	dhtNode.sm = make(chan *Finger)
+	dhtNode.taskQueue = make(chan string)
 	dhtNode.succ = [2]string{}
 	dhtNode.pred = [2]string{}
 	if nodeId == nil {
@@ -60,8 +63,10 @@ func (dhtNode *DHTNode) startServer(wg *sync.WaitGroup) {
 
 /************************ NODEJOIN *****************************************/
 func (dhtNode *DHTNode) nodeJoin(msg *Msg) {
+	var mutex = &sync.Mutex{}
 	//	var wg sync.WaitGroup
 	var result bool
+	//var done int
 	sender := dhtNode.contact.ip + ":" + dhtNode.contact.port
 	if dhtNode.succ[0] != "" {
 		result = between([]byte(dhtNode.nodeId), []byte(dhtNode.succ[0]), []byte(msg.Key))
@@ -74,9 +79,9 @@ func (dhtNode *DHTNode) nodeJoin(msg *Msg) {
 		dhtNode.pred[0] = msg.Key
 		go func() {
 			dhtNode.fingers = findFingers(dhtNode)
-			dhtNode.stabilize()
+			//dhtNode.stabilize()
 		}()
-		fmt.Println(dhtNode.succ[0] + "<- succ :" + dhtNode.nodeId + ": pred -> " + dhtNode.pred[0] + "\n")
+		//fmt.Println(dhtNode.succ[0] + "<- succ :" + dhtNode.nodeId + ": pred -> " + dhtNode.pred[0] + "\n")
 		if msg.Type == "init" {
 			msg := createMsg("ack", dhtNode.nodeId, sender, msg.Src, msg.Origin) // RACE CONDITION?
 			dhtNode.transport.send(msg)
@@ -88,10 +93,13 @@ func (dhtNode *DHTNode) nodeJoin(msg *Msg) {
 	} else if result == true && dhtNode.succ[1] != "" && dhtNode.pred[1] != "" && msg.Type == "join" {
 		dhtNode.transport.send(createMsg("pred", msg.Key, sender, dhtNode.succ[1], msg.Origin))
 		dhtNode.transport.send(createMsg("succ", dhtNode.succ[0], sender, msg.Origin, dhtNode.succ[1]))
+		mutex.Lock()
 		dhtNode.succ[1] = msg.Origin
 		dhtNode.succ[0] = msg.Key
+		mutex.Unlock()
 		dhtNode.transport.send(createMsg("pred", dhtNode.nodeId, sender, msg.Origin, sender))
-		fmt.Println(dhtNode.succ[0] + "<- succ :" + dhtNode.nodeId + ": pred -> " + dhtNode.pred[0] + "\n")
+		//fmt.Println(dhtNode.succ[0] + "<- succ :" + dhtNode.nodeId + ": pred -> " + dhtNode.pred[0] + "\n")
+		time.Sleep(time.Second * 1)
 		dhtNode.transport.send(createMsg("fingers", dhtNode.nodeId, sender, msg.Origin, sender))
 	} else {
 		dhtNode.transport.send(createMsg("join", msg.Key, sender, dhtNode.succ[1], msg.Origin))
@@ -131,11 +139,7 @@ func (dhtNode *DHTNode) reconnNodes(msg *Msg) {
 }
 
 /***************************** LOOOOKUUUUPUPP *************************************/
-func (dhtNode *DHTNode) setFingers() {
-	dhtNode.fingers = findFingers(dhtNode)
-	dhtNode.stabilize()
 
-}
 func (dhtNode *DHTNode) lookup(key string) {
 	src := dhtNode.contact.ip + ":" + dhtNode.contact.port
 	if dhtNode.responsible(key) {
@@ -159,6 +163,7 @@ func (dhtNode *DHTNode) lookupForward(msg *Msg) {
 }
 func (dhtNode *DHTNode) found(f *Finger) {
 	dhtNode.sm <- f
+
 }
 
 func (dhtNode *DHTNode) responsible(key string) bool {
@@ -221,11 +226,13 @@ func (dhtNode *DHTNode) stabilize() {
 }
 
 func (dhtNode *DHTNode) stabilizeForward(msg *Msg) {
+	//var wg sync.WaitGroup
 	src := dhtNode.contact.ip + ":" + dhtNode.contact.port
+	//fmt.Println(dhtNode.fingers.fingerList)
 	//fmt.Println(dhtNode.succ[1] + " " + msg.Origin)
+
 	go updateFingers(dhtNode)
 	if dhtNode.succ[1] != msg.Origin {
 		dhtNode.transport.send(createMsg("stabilize", dhtNode.nodeId, src, dhtNode.succ[1], msg.Origin))
->>>>>>> 76cf66b0d2acc8ba4394902e2149a7fe8c4d2d18
 	}
 }
