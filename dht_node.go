@@ -79,6 +79,7 @@ func (dhtNode *DHTNode) initRing(msg *Msg) {
 	dhtNode.pred[0] = msg.Key
 	//fmt.Println(dhtNode)
 	fmt.Println(dhtNode.succ[0] + "<- succ :" + dhtNode.nodeId + ": pred -> " + dhtNode.pred[0] + "\n")
+	go dhtNode.QueueTask(createTask("findFingers", nil))
 	/*go func() {
 		dhtNode.fingers = findFingers(dhtNode)
 		//dhtNode.stabilize()
@@ -97,8 +98,7 @@ func (dhtNode *DHTNode) initRing(msg *Msg) {
 		//		dhtNode.QueueTask(createTask("print", nil))
 	}
 
-	fmt.Println(dhtNode.nodeId + "YO YO FINGER YO")
-	go dhtNode.QueueTask(createTask("findFingers", nil))
+	//fmt.Println(dhtNode.nodeId + "YO YO FINGER YO")
 }
 
 func (dhtNode *DHTNode) printRing(msg *Msg) {
@@ -137,6 +137,7 @@ func (dhtNode *DHTNode) joinRing(msg *Msg) {
 	fmt.Println(dhtNode.pred[1])
 	*/ //Connect and reconnect succ/pred when node joins.
 	if result == true && dhtNode.succ[1] != "" && dhtNode.pred[1] != "" && msg.Type == "join" {
+		fmt.Println(dhtNode)
 		dhtNode.transport.send(createMsg("pred", msg.Key, sender, dhtNode.succ[1], msg.Origin))
 		dhtNode.transport.send(createMsg("succ", dhtNode.succ[0], sender, msg.Origin, dhtNode.succ[1]))
 		//mutex.Lock()
@@ -160,14 +161,14 @@ func (dhtNode *DHTNode) nodeJoin(msg *Msg) {
 	//Initiate ring if main node doesnt have connections
 	if dhtNode.succ[0] == "" && dhtNode.pred[0] == "" && dhtNode.initiated != 1 {
 		dhtNode.initiated = 1
-		fmt.Println("Beginning init..")
-		fmt.Println(msg)
+		//	fmt.Println("Beginning init..")
+		//	fmt.Println(msg)
 		go dhtNode.QueueTask(createTask("init", msg))
 
 		//KLAR ^
 	} else {
-		fmt.Println("Beginning join..") //onändlig loop, msg.Type är alltid request i queueTask.
-		fmt.Println(msg)
+		//	fmt.Println("Beginning join..") //onändlig loop, msg.Type är alltid request i queueTask.
+		//	fmt.Println(msg)
 		msg.Type = "join"
 		go dhtNode.QueueTask(createTask("join", msg))
 	}
@@ -235,8 +236,10 @@ func (dhtNode *DHTNode) found(f *Finger) {
 func (dhtNode *DHTNode) responsible(key string) bool {
 
 	if dhtNode.nodeId == key {
+		fmt.Println(dhtNode.nodeId + ": I R RESPONSIBLE FOR " + key)
 		return true
 	} else if dhtNode.pred[0] == key {
+		fmt.Println(dhtNode.nodeId + ": PRED R RESPONSIBLE FOR " + key)
 		return false
 	}
 	isResponsible := between([]byte(dhtNode.pred[0]), []byte(dhtNode.nodeId), []byte(key))
@@ -326,6 +329,7 @@ func (dhtNode *DHTNode) worker() {
 			case "init":
 				//fmt.Println("Exe init")
 				dhtNode.initRing(t.M)
+				//go dhtNode.QueueTask(createTask("findFinger", nil))
 				//time.Sleep(time.Millisecond * 1000)
 			case "reconn":
 				dhtNode.reconnNodes(t.M)

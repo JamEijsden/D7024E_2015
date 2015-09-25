@@ -10,10 +10,11 @@ import (
 func (node *DHTNode) joinRequest(dhtNode *DHTNode) {
 	rec := dhtNode.contact.ip + ":" + dhtNode.contact.port
 	go node.sendMsg("request", rec)
-	time.Sleep(time.Nanosecond * 100)
-	if node.succ[1] != "" {
+	time.Sleep(time.Millisecond * 10)
+	/*if node.succ[1] == "" {
+		fmt.Println("NOOOPE")
 		go node.sendMsg("request", rec)
-	}
+	}*/
 
 }
 
@@ -30,14 +31,14 @@ func TestNetwork(t *testing.T) {
 	id7 := "06"
 	id8 := "07"
 
-	node1 := makeDHTNode(&id1, "localhost", "1111")
-	node2 := makeDHTNode(&id2, "localhost", "1112")
-	node3 := makeDHTNode(&id3, "localhost", "1113")
-	node4 := makeDHTNode(&id4, "localhost", "1114")
-	node5 := makeDHTNode(&id5, "localhost", "1115")
-	node6 := makeDHTNode(&id6, "localhost", "1116")
-	node7 := makeDHTNode(&id7, "localhost", "1117")
-	node8 := makeDHTNode(&id8, "localhost", "1118")
+	node1 := makeDHTNode(&id1, "localhost", "1110")
+	node2 := makeDHTNode(&id2, "localhost", "1111")
+	node3 := makeDHTNode(&id3, "localhost", "1112")
+	node4 := makeDHTNode(&id4, "localhost", "1113")
+	node5 := makeDHTNode(&id5, "localhost", "1114")
+	node6 := makeDHTNode(&id6, "localhost", "1115")
+	node7 := makeDHTNode(&id7, "localhost", "1116")
+	node8 := makeDHTNode(&id8, "localhost", "1117")
 	/*
 		node1 := makeDHTNode(nil, "localhost", "1111")
 		node2 := makeDHTNode(nil, "localhost", "1112")
@@ -73,9 +74,16 @@ func TestNetwork(t *testing.T) {
 
 	node7.joinRequest(node1)
 
-	time.Sleep(time.Millisecond * 5000)
+	time.Sleep(time.Millisecond * 9000)
 	node1.QueueTask(createTask("print", createMsg("", "", "1", "", "")))
-
+	/*fmt.Println(node1)
+	fmt.Println(node2)
+	fmt.Println(node3)
+	fmt.Println(node4)
+	fmt.Println(node5)
+	fmt.Println(node6)
+	fmt.Println(node7)
+	*/
 	//findFingers(node1)
 	//printFingers(findFingers(node2))
 	//printFingers(node2.fingers)

@@ -47,7 +47,7 @@ func TestDHT1(t *testing.T) {
 }
 
 func TestBetween(t *testing.T) {
-	testBetween("03", "02", "02")
+	testBetween("00", "01", "02")
 }
 func TestDistance(t *testing.T) {
 	fmt.Println(distance([]byte("03"), []byte("06"), 3))
