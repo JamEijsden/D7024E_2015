@@ -79,7 +79,6 @@ func (dhtNode *DHTNode) initRing(msg *Msg) {
 	dhtNode.pred[0] = msg.Key
 	//fmt.Println(dhtNode)
 	fmt.Println(dhtNode.succ[0] + "<- succ :" + dhtNode.nodeId + ": pred -> " + dhtNode.pred[0] + "\n")
-	go dhtNode.QueueTask(createTask("findFingers", nil))
 	/*go func() {
 		dhtNode.fingers = findFingers(dhtNode)
 		//dhtNode.stabilize()
@@ -98,6 +97,7 @@ func (dhtNode *DHTNode) initRing(msg *Msg) {
 		//		dhtNode.QueueTask(createTask("print", nil))
 	}
 
+	go dhtNode.QueueTask(createTask("findFingers", nil))
 	//fmt.Println(dhtNode.nodeId + "YO YO FINGER YO")
 }
 
