@@ -39,17 +39,19 @@ func (transport *Transport) processMsg() {
 				case "pred", "succ":
 					go transport.node.QueueTask(createTask("reconn", m))
 				case "lookup":
-					transport.node.lookupForward(m)
+					go transport.node.QueueTask(createTask("lookup", m))
+					//transport.node.lookupForward(m)
 				case "lookup_found":
-					transport.node.found(&Finger{m.Key, m.Src})
+					fmt.Println(transport.node.nodeId + "YO YO FOUND YO")
+					go transport.node.found(&Finger{m.Key, m.Src})
 					//fmt.Println(&Finger{m.Key, m.Src})
 				case "lookup_finger":
 					transport.node.fingerForward(m)
 				case "stabilize":
 					transport.node.stabilizeForward(m)
 				case "fingers":
-					transport.node.QueueTask(createTask("findFingers", nil))
-					fmt.Println("task queue")
+					go transport.node.QueueTask(createTask("findFingers", nil))
+					//fmt.Println("task queue")
 				case "print":
 					go transport.node.QueueTask(createTask("print", m))
 				}

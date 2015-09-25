@@ -17,21 +17,18 @@ func (node *DHTNode) joinRequest(dhtNode *DHTNode) {
 
 }
 
-func initiateRing() {
-
-}
 func TestNetwork(t *testing.T) {
 	fmt.Println("Beginning test..")
 	var wg sync.WaitGroup
 
-	id1 := "01"
-	id2 := "02"
-	id3 := "03"
-	id4 := "04"
-	id5 := "05"
-	id6 := "06"
-	id7 := "07"
-	id8 := "08"
+	id1 := "00"
+	id2 := "01"
+	id3 := "02"
+	id4 := "03"
+	id5 := "04"
+	id6 := "05"
+	id7 := "06"
+	id8 := "07"
 
 	node1 := makeDHTNode(&id1, "localhost", "1111")
 	node2 := makeDHTNode(&id2, "localhost", "1112")
@@ -76,8 +73,9 @@ func TestNetwork(t *testing.T) {
 
 	node7.joinRequest(node1)
 
-	//time.Sleep(time.Millisecond * 5000)
-	//node1.QueueTask(createTask("print", createMsg("", "", "1", "", "")))
+	time.Sleep(time.Millisecond * 5000)
+	node1.QueueTask(createTask("print", createMsg("", "", "1", "", "")))
+
 	//findFingers(node1)
 	//printFingers(findFingers(node2))
 	//printFingers(node2.fingers)

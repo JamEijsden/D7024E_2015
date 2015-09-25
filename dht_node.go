@@ -79,7 +79,6 @@ func (dhtNode *DHTNode) initRing(msg *Msg) {
 	dhtNode.pred[0] = msg.Key
 	//fmt.Println(dhtNode)
 	fmt.Println(dhtNode.succ[0] + "<- succ :" + dhtNode.nodeId + ": pred -> " + dhtNode.pred[0] + "\n")
-
 	/*go func() {
 		dhtNode.fingers = findFingers(dhtNode)
 		//dhtNode.stabilize()
@@ -98,15 +97,19 @@ func (dhtNode *DHTNode) initRing(msg *Msg) {
 		//		dhtNode.QueueTask(createTask("print", nil))
 	}
 
+	fmt.Println(dhtNode.nodeId + "YO YO FINGER YO")
+	go dhtNode.QueueTask(createTask("findFingers", nil))
 }
 
 func (dhtNode *DHTNode) printRing(msg *Msg) {
 	src := dhtNode.contact.ip + ":" + dhtNode.contact.port
 	if msg.Type == "" {
 		fmt.Println(dhtNode)
+		dhtNode.printFingers()
 		dhtNode.transport.send(createMsg("print", "", src, dhtNode.succ[1], src))
 	} else if src != msg.Origin {
 		fmt.Println(dhtNode)
+		dhtNode.printFingers()
 		dhtNode.transport.send(createMsg("print", "", src, dhtNode.succ[1], msg.Origin))
 
 	} else {
@@ -114,6 +117,13 @@ func (dhtNode *DHTNode) printRing(msg *Msg) {
 	}
 }
 
+func (dhtNode *DHTNode) printFingers() {
+	for _, f := range dhtNode.fingers.fingerList {
+		fmt.Print(f)
+		fmt.Print(" \n")
+
+	}
+}
 func (dhtNode *DHTNode) joinRing(msg *Msg) {
 	var result bool
 	sender := dhtNode.contact.ip + ":" + dhtNode.contact.port
@@ -136,7 +146,7 @@ func (dhtNode *DHTNode) joinRing(msg *Msg) {
 		dhtNode.transport.send(createMsg("pred", dhtNode.nodeId, sender, msg.Origin, sender))
 		fmt.Println(dhtNode.succ[0] + "<- succ :" + dhtNode.nodeId + ": pred -> " + dhtNode.pred[0] + "\n")
 		time.Sleep(time.Second * 1)
-		//dhtNode.transport.send(createMsg("fingers", dhtNode.nodeId, sender, msg.Origin, sender))
+		go dhtNode.transport.send(createMsg("fingers", dhtNode.nodeId, sender, msg.Origin, sender))
 	} else if dhtNode.succ[1] != "" {
 		dhtNode.transport.send(createMsg("join", msg.Key, sender, dhtNode.succ[1], msg.Origin))
 	} else {
@@ -202,7 +212,7 @@ func (dhtNode *DHTNode) lookup(key string) {
 		dhtNode.sm <- &Finger{dhtNode.nodeId, src}
 	} else {
 		// send here
-		dhtNode.transport.send(createMsg("lookup", key, src, dhtNode.succ[1], src))
+		go dhtNode.transport.send(createMsg("lookup", key, src, dhtNode.succ[1], src))
 		//return dhtNode.successor.lookup(key)
 	}
 }
@@ -212,6 +222,7 @@ func (dhtNode *DHTNode) lookupForward(msg *Msg) {
 	if dhtNode.responsible(msg.Key) {
 		dhtNode.transport.send(createMsg("lookup_found", dhtNode.nodeId, src, msg.Origin, src))
 	} else {
+		fmt.Println(msg)
 		dhtNode.transport.send(createMsg("lookup", msg.Key, src, dhtNode.succ[1], msg.Origin))
 	}
 
@@ -319,10 +330,11 @@ func (dhtNode *DHTNode) worker() {
 			case "reconn":
 				dhtNode.reconnNodes(t.M)
 			case "findFingers":
-				fmt.Println("FINGERS!")
+				dhtNode.fingers = findFingers(dhtNode)
 			case "print":
-
 				dhtNode.printRing(t.M)
+			case "lookup":
+				dhtNode.lookupForward(t.M)
 			}
 		}
 	}
