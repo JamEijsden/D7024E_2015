@@ -31,14 +31,14 @@ func TestNetwork(t *testing.T) {
 	id7 := "06"
 	id8 := "07"
 
-	node1 := makeDHTNode(&id1, "localhost", "1110")
-	node2 := makeDHTNode(&id2, "localhost", "1111")
-	node3 := makeDHTNode(&id3, "localhost", "1112")
-	node4 := makeDHTNode(&id4, "localhost", "1113")
-	node5 := makeDHTNode(&id5, "localhost", "1114")
-	node6 := makeDHTNode(&id6, "localhost", "1115")
-	node7 := makeDHTNode(&id7, "localhost", "1116")
-	node8 := makeDHTNode(&id8, "localhost", "1117")
+	node0 := makeDHTNode(&id1, "localhost", "1110")
+	node1 := makeDHTNode(&id2, "localhost", "1111")
+	node2 := makeDHTNode(&id3, "localhost", "1112")
+	node3 := makeDHTNode(&id4, "localhost", "1113")
+	node4 := makeDHTNode(&id5, "localhost", "1114")
+	node5 := makeDHTNode(&id6, "localhost", "1115")
+	node6 := makeDHTNode(&id7, "localhost", "1116")
+	node7 := makeDHTNode(&id8, "localhost", "1117")
 	/*
 		node1 := makeDHTNode(nil, "localhost", "1111")
 		node2 := makeDHTNode(nil, "localhost", "1112")
@@ -49,7 +49,8 @@ func TestNetwork(t *testing.T) {
 		node7 := makeDHTNode(nil, "localhost", "1117")
 		node8 := makeDHTNode(nil, "localhost", "1118")
 	*/ //	node9 := makeDHTNode(nil, "localhost", "1119")
-	wg.Add(7)
+	wg.Add(8)
+	go node0.startServer(&wg)
 	go node1.startServer(&wg)
 	go node2.startServer(&wg)
 	go node3.startServer(&wg)
@@ -60,22 +61,27 @@ func TestNetwork(t *testing.T) {
 	wg.Wait()
 
 	//joinRing(node1, &wg)
-	node2.joinRequest(node1)
+	node1.joinRequest(node0)
 
 	//
 
-	node3.joinRequest(node1)
+	node2.joinRequest(node1)
 
+	node3.joinRequest(node0)
+
+	
+
+	node5.joinRequest(node0)
+
+	node6.joinRequest(node0)
+
+	time.Sleep(time.Millisecond * 3000)
+	//node0.QueueTask(createTask("print", createMsg("", "", "1", "", "")))
+	
+	time.Sleep(time.Second * 12)
 	node4.joinRequest(node1)
-
-	node5.joinRequest(node1)
-
-	node6.joinRequest(node1)
-
 	node7.joinRequest(node1)
 
-	time.Sleep(time.Millisecond * 5000)
-	node1.QueueTask(createTask("print", createMsg("", "", "1", "", "")))
 	/*fmt.Println(node1)
 	fmt.Println(node2)
 	fmt.Println(node3)
@@ -100,8 +106,7 @@ func TestNetwork(t *testing.T) {
 	*/
 	//node1.netPrintRing(nil)
 
-	node8.transport.listen()
-
+	time.Sleep(time.Second * 500)
 	/*fmt.Print("Enter text: ")
 	var input string
 	fmt.Scanln(&input)

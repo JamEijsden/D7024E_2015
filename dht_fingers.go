@@ -3,7 +3,7 @@ package dht
 import (
 	"encoding/hex"
 	"fmt"
-	"sync"
+	//"sync"
 )
 
 const BITS int = 3
@@ -59,13 +59,13 @@ func findFingers(dhtNode *DHTNode) *FingerTable {
 	return &FingerTable{nodes}
 }
 
-func updateFingers(dhtNode *DHTNode) *FingerTable {
-	var m = &sync.Mutex{}
-	var nodes [BITS]*Finger
+func updateFingers(dhtNode *DHTNode) {
+
+	//var nodes [BITS]*Finger
 	var found int
 	src := dhtNode.contact.ip + ":" + dhtNode.contact.port
 	for i := 0; i < BITS; i++ {
-		m.Lock()
+	
 		// defer m.Unlock()
 		if dhtNode.fingers.fingerList[i] != nil {
 
@@ -96,7 +96,6 @@ func updateFingers(dhtNode *DHTNode) *FingerTable {
 
 			}
 		}
-		m.Unlock()
 		//fingerSuccessorBytes, _ := hex.DecodeString(fingerSuccessor.nodeId)
 		//dist := distance(idBytes, fingerSuccessorBytes, BITS)
 		//fmt.Printf(fingerSuccessor.nodeId + " ")
@@ -114,7 +113,7 @@ func updateFingers(dhtNode *DHTNode) *FingerTable {
 	//printFingers(dhtNode)
 
 	//ft.fingerList = nodes
-	return &FingerTable{nodes}
+
 }
 
 /*

@@ -48,7 +48,8 @@ func (transport *Transport) processMsg() {
 				case "lookup_finger":
 					transport.node.fingerForward(m)
 				case "stabilize":
-					transport.node.stabilizeForward(m)
+					go transport.node.QueueTask(createTask("stabilize", m))
+					//transport.node.stabilizeForward(m)
 				case "fingers":
 					go transport.node.QueueTask(createTask("findFingers", nil))
 					//fmt.Println("task queue")
@@ -83,7 +84,7 @@ func (transport *Transport) listen() {
 }
 
 func (transport *Transport) send(msg *Msg) {
-	fmt.Println(msg.Src + "> Type: " + msg.Key + " " + msg.Type + " to " + msg.Dst)
+	//fmt.Println(msg.Src + "> Type: " + msg.Key + " " + msg.Type + " to " + msg.Dst)
 	udpAddr, err := net.ResolveUDPAddr("udp", msg.Dst)
 	if err != nil {
 		fmt.Println(err.Error())
