@@ -89,15 +89,16 @@ func (dhtNode *DHTNode) initRing(msg *Msg) {
 	//Här måste vi ändra msg.Type skulle jag tro. Eller i queueTask skiten.
 
 	if msg.Type == "request" {
-		msg := createMsg("init", dhtNode.nodeId, sender, msg.Src, msg.Origin) // RACE CONDITION?
+		msg := createMsg("init", dhtNode.nodeId, sender, msg.Src, sender) // RACE CONDITION?
 		go dhtNode.transport.send(msg)
 	} else if msg.Type == "init" {
+		msg := createMsg("fingers", dhtNode.nodeId, sender, msg.Src, sender)
+		go dhtNode.transport.send(msg)
 		fmt.Println("Ring initiated\n")
 
-		//		dhtNode.QueueTask(createTask("print", nil))
+		//		dhtNode.QueueTask(createTask("print//", nil))
 	}
 
-	go dhtNode.QueueTask(createTask("findFingers", nil))
 	//fmt.Println(dhtNode.nodeId + "YO YO FINGER YO")
 }
 
@@ -146,7 +147,7 @@ func (dhtNode *DHTNode) joinRing(msg *Msg) {
 		//mutex.Unlock()
 		dhtNode.transport.send(createMsg("pred", dhtNode.nodeId, sender, msg.Origin, sender))
 		fmt.Println(dhtNode.succ[0] + "<- succ :" + dhtNode.nodeId + ": pred -> " + dhtNode.pred[0] + "\n")
-		time.Sleep(time.Second * 1)
+		time.Sleep(time.Millisecond * 1)
 		go dhtNode.transport.send(createMsg("fingers", dhtNode.nodeId, sender, msg.Origin, sender))
 	} else if dhtNode.succ[1] != "" {
 		dhtNode.transport.send(createMsg("join", msg.Key, sender, dhtNode.succ[1], msg.Origin))
@@ -219,6 +220,7 @@ func (dhtNode *DHTNode) lookup(key string) {
 }
 
 func (dhtNode *DHTNode) lookupForward(msg *Msg) {
+	fmt.Println(dhtNode.nodeId)
 	src := dhtNode.contact.ip + ":" + dhtNode.contact.port
 	if dhtNode.responsible(msg.Key) {
 		dhtNode.transport.send(createMsg("lookup_found", dhtNode.nodeId, src, msg.Origin, src))
@@ -236,10 +238,10 @@ func (dhtNode *DHTNode) found(f *Finger) {
 func (dhtNode *DHTNode) responsible(key string) bool {
 
 	if dhtNode.nodeId == key {
-		fmt.Println(dhtNode.nodeId + ": I R RESPONSIBLE FOR " + key)
+		//fmt.Println(dhtNode.nodeId + ": I R RESPONSIBLE FOR " + key)
 		return true
 	} else if dhtNode.pred[0] == key {
-		fmt.Println(dhtNode.nodeId + ": PRED R RESPONSIBLE FOR " + key)
+		//fmt.Println(dhtNode.nodeId + ": PRED R RESPONSIBLE FOR " + key)
 		return false
 	}
 	isResponsible := between([]byte(dhtNode.pred[0]), []byte(dhtNode.nodeId), []byte(key))
@@ -271,7 +273,7 @@ func (dhtNode *DHTNode) fingerLookup(key string) {
 func (dhtNode *DHTNode) fingerForward(msg *Msg) {
 	src := dhtNode.contact.ip + ":" + dhtNode.contact.port
 	if dhtNode.responsible(msg.Key) {
-		dhtNode.transport.send(createMsg("lookup_found", msg.Key, src, msg.Origin, src))
+		go dhtNode.transport.send(createMsg("lookup_found", msg.Key, src, msg.Origin, src))
 	} else {
 		fmt.Println("fingerForward: ")
 		length := len(dhtNode.fingers.fingerList) - 1
@@ -307,11 +309,11 @@ func (dhtNode *DHTNode) stabilizeForward(msg *Msg) {
 }
 
 func (dhtNode *DHTNode) QueueTask(t *Task) {
-	/*fmt.Print("Adding ")
-	fmt.Print(t.M.Src + " ")
+	fmt.Print("Adding ")
+	fmt.Print(dhtNode.nodeId + " ")
 	fmt.Print(t)
 	fmt.Println(" to queue")
-	*/dhtNode.taskQueue <- t
+	dhtNode.taskQueue <- t
 }
 
 func (dhtNode *DHTNode) worker() {
@@ -329,8 +331,8 @@ func (dhtNode *DHTNode) worker() {
 			case "init":
 				//fmt.Println("Exe init")
 				dhtNode.initRing(t.M)
-				//go dhtNode.QueueTask(createTask("findFinger", nil))
 				//time.Sleep(time.Millisecond * 1000)
+
 			case "reconn":
 				dhtNode.reconnNodes(t.M)
 			case "findFingers":

@@ -22,25 +22,30 @@ func findFingers(dhtNode *DHTNode) *FingerTable {
 	//fmt.Println(dhtNode)
 	var nodes [BITS]*Finger
 	var found int
-	src := dhtNode.contact.ip + ":" + dhtNode.contact.port
+	//src := dhtNode.contact.ip + ":" + dhtNode.contact.port
 	for i := 0; i < BITS; i++ {
 		idBytes, _ := hex.DecodeString(dhtNode.nodeId)
 		fingerHex, _ := calcFinger(idBytes, (i + 1), BITS)
-		fmt.Println(dhtNode.nodeId + ": FINGERHEX: " + fingerHex)
+		//fmt.Println(dhtNode.nodeId + ": FINGERHEX: " + fingerHex)
 		if fingerHex == "" {
 			fingerHex = "00"
 		}
-		if i == 0 {
-			dhtNode.lookup(fingerHex)
-		} else {
+		//if i == 0 {
+		//fmt.Println("INITING A LOOkUP")
+		go dhtNode.lookup(fingerHex)
+		/*}  else {
 			dhtNode.transport.send(createMsg("lookup", fingerHex, src, nodes[i-1].address, src))
-		}
+		}*/
 		for found != 1 {
 			select {
 			case s := <-dhtNode.sm:
 				//fmt.Println(s)
+				if dhtNode.nodeId == s.hash {
+					nodes[i] = &Finger{dhtNode.pred[0], dhtNode.pred[1]}
+				} else {
+					nodes[i] = s
+				}
 				found = 1
-				nodes[i] = s
 			}
 		}
 		found = 0
@@ -70,7 +75,7 @@ func updateFingers(dhtNode *DHTNode) *FingerTable {
 			//fmt.Println(dhtNode.fingers.fingerList[i])
 			if fingerHex != dhtNode.fingers.fingerList[i].hash {
 				if i == 0 {
-					dhtNode.lookup(fingerHex)
+					go dhtNode.lookup(fingerHex)
 				} else {
 					dhtNode.transport.send(createMsg("lookup", fingerHex, src, dhtNode.fingers.fingerList[i-1].address, src))
 				}

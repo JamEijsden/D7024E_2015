@@ -50,7 +50,7 @@ func (transport *Transport) processMsg() {
 				case "stabilize":
 					transport.node.stabilizeForward(m)
 				case "fingers":
-					transport.node.QueueTask(createTask("findFingers", nil))
+					go transport.node.QueueTask(createTask("findFingers", nil))
 					//fmt.Println("task queue")
 				case "print":
 					go transport.node.QueueTask(createTask("print", m))
