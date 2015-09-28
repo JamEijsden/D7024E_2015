@@ -86,7 +86,7 @@ func (dhtNode *DHTNode) initRing(msg *Msg) {
 	//fmt.Println(dhtNode.succ[0] + "<- succ :" + dhtNode.nodeId + ": pred -> " + dhtNode.pred[0] + "\n")
 	/*fmt.Print("initRing msg Type: ")--------
 	fmt.Println(msg.Type) // denna är alltid request */
-	//Här måste vi ändra msg.Type skulle jag tro. Eller i queueTask skiten.
+	//Här måste vi ändra msg.Type skulle jag tro. Eller i Task skiten.
 
 	if msg.Type == "request" {
 		msg := createMsg("init", dhtNode.nodeId, sender, msg.Src, sender) // RACE CONDITION?
@@ -95,6 +95,9 @@ func (dhtNode *DHTNode) initRing(msg *Msg) {
 		msg := createMsg("fingers", dhtNode.nodeId, sender, msg.Src, sender)
 		go dhtNode.transport.send(msg)
 		fmt.Println("Ring initiated\n")
+		time.Sleep(time.Millisecond * 500)
+		go dhtNode.QueueTask(createTask("findFingers", nil))
+		//time.Sleep(time.Millisecond * 5löc00)
 
 		//		dhtNode.QueueTask(createTask("print//", nil))
 	}

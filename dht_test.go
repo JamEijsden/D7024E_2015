@@ -74,7 +74,7 @@ func TestNetwork(t *testing.T) {
 
 	node7.joinRequest(node1)
 
-	time.Sleep(time.Millisecond * 9000)
+	time.Sleep(time.Millisecond * 5000)
 	node1.QueueTask(createTask("print", createMsg("", "", "1", "", "")))
 	/*fmt.Println(node1)
 	fmt.Println(node2)
