@@ -78,7 +78,7 @@ func TestNetwork(t *testing.T) {
 	//time.Sleep(time.Millisecond * 3000)
 	//node0.QueueTask(createTask("print", createMsg("", "", "1", "", "")))
 
-	time.Sleep(time.Second * 5)
+	time.Sleep(time.Second * 8)
 
 	/*fmt.Println(node1)
 	fmt.Println(node2)
@@ -89,9 +89,9 @@ func TestNetwork(t *testing.T) {
 	fmt.Println(node7)
 	*/
 	//findFingers(node1)
-	//printFingers(findFingers(node2))
+	//printFingers(findFingers(node1))
 	//printFingers(node2.fingers)
-	//node1.fingerLookup("06")
+	node1.fingerLookup("00")
 	/*
 		fmt.Println(node1.contact.port + "> " + node1.pred[0] + " " + node1.succ[0])
 		fmt.Println(node2.contact.port + "> " + node2.pred[0] + " " + node2.succ[0])

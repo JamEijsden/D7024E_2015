@@ -46,7 +46,8 @@ func (transport *Transport) processMsg() {
 					go transport.node.found(&Finger{m.Key, m.Src})
 					//fmt.Println(&Finger{m.Key, m.Src})
 				case "lookup_finger":
-					transport.node.fingerForward(m)
+					//go transport.node.QueueTask(createMsg("fingerLookup", m))
+					go transport.node.fingerForward(m)
 				case "stabilize":
 					go transport.node.QueueTask(createTask("stabilize", m))
 					//transport.node.stabilizeForward(m)
