@@ -98,7 +98,7 @@ func (dhtNode *DHTNode) initRing(msg *Msg) {
 		fmt.Println("Ring initiated\n")
 		time.Sleep(time.Millisecond * 500)
 		go dhtNode.QueueTask(createTask("findFingers", nil))
-		//time.Sleep(time.Millisecond * 5löc00)
+		time.Sleep(time.Millisecond * 500)
 
 		//		dhtNode.QueueTask(createTask("print//", nil))
 	}
@@ -153,7 +153,7 @@ func (dhtNode *DHTNode) joinRing(msg *Msg) {
 		//mutex.Unlock()
 		dhtNode.transport.send(createMsg("pred", dhtNode.nodeId, sender, msg.Origin, sender))
 		fmt.Println(dhtNode.succ[0] + "<- succ :" + dhtNode.nodeId + ": pred -> " + dhtNode.pred[0] + "\n")
-		time.Sleep(time.Millisecond * 1)
+		time.Sleep(time.Millisecond * 1000)
 		go dhtNode.transport.send(createMsg("fingers", dhtNode.nodeId, sender, msg.Origin, sender))
 	} else if dhtNode.succ[1] != "" {
 		dhtNode.transport.send(createMsg("join", msg.Key, sender, dhtNode.succ[1], msg.Origin))
@@ -343,6 +343,7 @@ func (dhtNode *DHTNode) worker() {
 				dhtNode.reconnNodes(t.M)
 			case "findFingers":
 				dhtNode.fingers = findFingers(dhtNode)
+				//time.Sleep(time.Millisecond * 500)
 			case "startStabilize":
 				dhtNode.stabilize()
 			case "stabilize":
@@ -356,10 +357,10 @@ func (dhtNode *DHTNode) worker() {
 	}
 }
 
-func (dhtNode *DHTNode) updateTimer(){
+func (dhtNode *DHTNode) updateTimer() {
 	for {
-	time.Sleep(time.Millisecond * 5000)
-	dhtNode.QueueTask(createTask("print", createMsg("", "", "1", "", "")))
-	go dhtNode.QueueTask(createTask("startStabilize", nil))
+		time.Sleep(time.Millisecond * 3000)
+		//dhtNode.QueueTask(createTask("print", createMsg("", "", "1", "", "")))
+		go dhtNode.QueueTask(createTask("startStabilize", nil))
 	}
 }

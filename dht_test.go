@@ -65,22 +65,20 @@ func TestNetwork(t *testing.T) {
 
 	//
 
-	node2.joinRequest(node1)
+	node2.joinRequest(node0)
 
 	node3.joinRequest(node0)
-
-	
 
 	node5.joinRequest(node0)
 
 	node6.joinRequest(node0)
 
-	time.Sleep(time.Millisecond * 3000)
+	node4.joinRequest(node0)
+	node7.joinRequest(node0)
+	//time.Sleep(time.Millisecond * 3000)
 	//node0.QueueTask(createTask("print", createMsg("", "", "1", "", "")))
-	
-	time.Sleep(time.Second * 12)
-	node4.joinRequest(node1)
-	node7.joinRequest(node1)
+
+	time.Sleep(time.Second * 5)
 
 	/*fmt.Println(node1)
 	fmt.Println(node2)

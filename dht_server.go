@@ -39,8 +39,8 @@ func (transport *Transport) processMsg() {
 				case "pred", "succ":
 					go transport.node.QueueTask(createTask("reconn", m))
 				case "lookup":
-					go transport.node.QueueTask(createTask("lookup", m))
-					//transport.node.lookupForward(m)
+					//go transport.node.QueueTask(createTask("lookup", m))
+					go transport.node.lookupForward(m)
 				case "lookup_found":
 					//fmt.Println(transport.node.nodeId + "YO YO FOUND YO")
 					go transport.node.found(&Finger{m.Key, m.Src})
