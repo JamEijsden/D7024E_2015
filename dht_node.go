@@ -257,43 +257,54 @@ func (dhtNode *DHTNode) responsible(key string) bool {
 }
 
 func (dhtNode *DHTNode) fingerLookup(key string) {
+	fmt.Println("Looking up finger: ")
 	src := dhtNode.contact.ip + ":" + dhtNode.contact.port
-	fmt.Print("list: \t")
-	fmt.Print(dhtNode.fingers.fingerList) //list is empty, wtf?
+	found := 0
 	if dhtNode.responsible(key) {
-		dhtNode.sm <- &Finger{dhtNode.nodeId, src}
+		go dhtNode.found(&Finger{dhtNode.nodeId, src})
 	} else {
 		length := len(dhtNode.fingers.fingerList) - 1
 		temp := length
 		for temp >= 0 {
-			if between([]byte(dhtNode.nodeId), []byte(dhtNode.fingers.fingerList[temp].hash), []byte(key)) { //check if nodeId and it's last finger is between the key
-				if dhtNode.succ[0] == dhtNode.fingers.fingerList[temp].hash && temp == 0 {
-					dhtNode.transport.send(createMsg("lookup_finger", key, src, dhtNode.succ[1], src))
-				}
+			fmt.Print(dhtNode.nodeId)
+			fmt.Print(" - ")
+			fmt.Print(dhtNode.fingers.fingerList[temp].hash)
+			fmt.Println("")
+			if between([]byte(dhtNode.nodeId), []byte(dhtNode.fingers.fingerList[temp].hash), []byte(key)) {
 				temp = temp - 1
 			} else {
 				dhtNode.transport.send(createMsg("lookup_finger", key, src, dhtNode.fingers.fingerList[temp].address, src))
+				temp = -1
 			}
+		}
+	}
+	for found != 1 {
+		select {
+		case s := <-dhtNode.sm:
+			fmt.Println(s.hash)
+			found = 1
 		}
 	}
 }
 
 func (dhtNode *DHTNode) fingerForward(msg *Msg) {
+	//fmt.Println(dhtNode.nodeId)
 	src := dhtNode.contact.ip + ":" + dhtNode.contact.port
 	if dhtNode.responsible(msg.Key) {
-		go dhtNode.transport.send(createMsg("lookup_found", msg.Key, src, msg.Origin, src))
+		dhtNode.transport.send(createMsg("lookup_found", msg.Key, src, msg.Origin, src))
 	} else {
-		fmt.Println("fingerForward: ")
 		length := len(dhtNode.fingers.fingerList) - 1
 		temp := length
 		for temp >= 0 {
+			fmt.Print(dhtNode.nodeId)
+			fmt.Print(" - ")
+			fmt.Print(dhtNode.fingers.fingerList[temp].hash)
+			fmt.Println("")
 			if between([]byte(dhtNode.nodeId), []byte(dhtNode.fingers.fingerList[temp].hash), []byte(msg.Key)) { //check if nodeId and it's last finger is between the key
-				if dhtNode.succ[0] == dhtNode.fingers.fingerList[temp].hash && temp == 0 {
-					dhtNode.transport.send(createMsg("lookup_finger", msg.Key, src, dhtNode.succ[1], src))
-				}
 				temp = temp - 1
 			} else {
-				dhtNode.transport.send(createMsg("lookup_finger", dhtNode.nodeId, src, dhtNode.fingers.fingerList[temp].address, src))
+				dhtNode.transport.send(createMsg("lookup_finger", msg.Key, src, dhtNode.fingers.fingerList[temp].address, msg.Origin))
+				temp = -1
 			}
 		}
 	}
@@ -354,6 +365,8 @@ func (dhtNode *DHTNode) taskHandler() {
 				dhtNode.printRing(t.M)
 			case "lookup":
 				dhtNode.lookupForward(t.M)
+			case "fingerLookup":
+				dhtNode.fingerForward(t.M)
 			}
 		}
 	}
