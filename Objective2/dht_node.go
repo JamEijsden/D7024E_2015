@@ -26,7 +26,6 @@ type DHTNode struct {
 	transport *Transport
 	sm        chan *Finger
 	taskQueue chan *Task
-	heartbeat chan *string
 	initiated int
 }
 
@@ -46,7 +45,6 @@ func makeDHTNode(nodeId *string, ip string, port string) *DHTNode {
 	dhtNode.contact.port = port
 	dhtNode.sm = make(chan *Finger)
 	dhtNode.taskQueue = make(chan *Task)
-	dhtNode.heartbeat = make(chan string)
 	dhtNode.succ = [2]string{}
 	dhtNode.pred = [2]string{}
 	dhtNode.initiated = 0
@@ -62,7 +60,7 @@ func makeDHTNode(nodeId *string, ip string, port string) *DHTNode {
 	bindAdr := (dhtNode.contact.ip + ":" + dhtNode.contact.port)
 	dhtNode.transport = CreateTransport(dhtNode, bindAdr)
 	go dhtNode.transport.processMsg()
-	go dhtNode.taskHandler()
+	go dhtNode.worker()
 
 	return dhtNode
 }
@@ -324,7 +322,7 @@ func (dhtNode *DHTNode) QueueTask(t *Task) {
 	*/dhtNode.taskQueue <- t
 }
 
-func (dhtNode *DHTNode) taskHandler() {
+func (dhtNode *DHTNode) worker() {
 	for {
 		select {
 		case t := <-dhtNode.taskQueue:
@@ -361,34 +359,9 @@ func (dhtNode *DHTNode) taskHandler() {
 
 func (dhtNode *DHTNode) updateTimer() {
 	for {
-		time.Sleep(time.Millisecond * 5000)
+		time.Sleep(time.Millisecond * 3000)
 		dhtNode.QueueTask(createTask("print", createMsg("", "", "1", "", "")))
 		go dhtNode.QueueTask(createTask("startStabilize", nil))
 	}
 
-}
-
-/******************************************************************
-***************************** NODE LEAVE **************************
-*******************************************************************/
-
-func (dhtNode *DHTNode) leaveRing() {
-	src := dhtNode.contact.ip + ":" + dhtNode.contact.port
-	go dhtNode.transport.send(createMsg("pred", dhtNode.pred[0], src, dhtNode.succ[1], dhtNode.pred[1]))
-	go dhtNode.transport.send(createMsg("succ", dhtNode.succ[0], src, dhtNode.pred[1], dhtNode.succ[1]))
-	fmt.Println(dhtNode.nodeId + " left the ring")
-	return
-}
-
-/*******************************************************************
-******************************* NODE FAIL **************************
-********************************************************************/
-
-func (dhtNode *DHTNode) heartbeatHandler() {
-	src := dhtNode.contact.ip + ":" + dhtNode.contact.port
-	for {
-		time.Sleep(time.Millisecond * 2000)
-		go dhtNode.transport.send(createMsg("heartbeat", dhtNode.nodeId, src, dhtNode.pred[1], src))
-
-	}
 }
