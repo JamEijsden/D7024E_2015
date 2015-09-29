@@ -26,37 +26,56 @@ func (transport *Transport) processMsg() {
 
 	go func() {
 		for {
-			select {
-			case m := <-transport.queue:
-				switch m.Type {
+			if transport.node.online != 0 {
+				select {
+				case m := <-transport.queue:
+					switch m.Type {
 
-				case "init":
-					//fmt.Println(transport.node.nodeId + " INITING")
-					go transport.node.QueueTask(createTask("init", m))
-				case "join", "request":
-					//fmt.Println("Exe join")
-					go transport.node.QueueTask(createTask("join", m))
-				case "pred", "succ":
-					go transport.node.QueueTask(createTask("reconn", m))
-				case "lookup":
-					//go transport.node.QueueTask(createTask("lookup", m))
-					go transport.node.lookupForward(m)
-				case "lookup_found":
-					//fmt.Println(transport.node.nodeId + "YO YO FOUND YO")
-					go transport.node.found(&Finger{m.Key, m.Src})
-					//fmt.Println(&Finger{m.Key, m.Src})
-				case "lookup_finger":
-					//go transport.node.QueueTask(createMsg("fingerLookup", m))
-
-					go transport.node.fingerForward(m)
-				case "stabilize":
-					go transport.node.QueueTask(createTask("stabilize", m))
-					//transport.node.stabilizeForward(m)
-				case "fingers":
-					go transport.node.QueueTask(createTask("findFingers", nil))
-					//fmt.Println("task queue")
-				case "print":
-					go transport.node.QueueTask(createTask("print", m))
+					case "init":
+						//fmt.Println(transport.node.nodeId + " INITING")
+						go transport.node.QueueTask(createTask("init", m))
+					case "join", "request", "done":
+						//fmt.Println(m.Key)
+						go transport.node.QueueTask(createTask("join", m))
+					case "pred":
+						src := transport.node.contact.ip + ":" + transport.node.contact.port
+						go transport.send(createMsg("response", transport.node.pred[0], src, m.Origin, transport.node.pred[1]))
+					case "succ":
+						transport.node.QueueTask(createTask("reconn", m))
+					case "lookup":
+						//go transport.node.QueueTask(createTask("lookup", m))
+						go transport.node.lookupForward(m)
+					case "lookup_found":
+						//fmt.Println(transport.node.nodeId + "YO YO FOUND YO")
+						go transport.node.found(&Finger{m.Key, m.Src})
+						//fmt.Println(&Finger{m.Key, m.Src})
+					case "lookup_finger":
+						//go transport.node.QueueTask(createMsg("fingerLookup", m))
+						go transport.node.fingerForward(m)
+					case "notify":
+						go transport.node.QueueTask(createTask("notify", m))
+					case "stabilize":
+						go transport.node.QueueTask(createTask("stabilize", m))
+						//transport.node.stabilizeForward(m)
+					case "fingers":
+						go transport.node.QueueTask(createTask("findFingers", nil))
+						//fmt.Println("task queue")
+					case "print":
+						go transport.node.QueueTask(createTask("print", m))
+					case "leave":
+						go transport.node.QueueTask(createTask("leave", m))
+					case "response":
+						//go transport.node.QueueTask(createTask("stabilize", m))
+						go func() {
+							transport.node.responseMsg <- m
+						}()
+					case "heartbeat":
+						go transport.node.heartbeatRespons(m)
+					case "heartbeat_respons":
+						go func() {
+							transport.node.heartbeat <- m.Key
+						}()
+					}
 				}
 			}
 		}
@@ -78,8 +97,9 @@ func (transport *Transport) listen() {
 		err = dec.Decode(&msg) //decodes the message where the message adress is and adds an error msg if there's none.
 		//fmt.Println(transport.bindAddress + "> Received Message from " + msg.Src)
 		//fmt.Println(msg)
-		transport.queue <- &msg
-
+		go func() {
+			transport.queue <- &msg
+		}()
 		//return
 		//	we	got	a	message, do something
 	}

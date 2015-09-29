@@ -22,7 +22,6 @@ func findFingers(dhtNode *DHTNode) *FingerTable {
 	//fmt.Println(dhtNode)
 	var nodes [BITS]*Finger
 	var found int
-	//src := dhtNode.contact.ip + ":" + dhtNode.contact.port
 	for i := 0; i < BITS; i++ {
 		idBytes, _ := hex.DecodeString(dhtNode.nodeId)
 		fingerHex, _ := calcFinger(idBytes, (i + 1), BITS)
@@ -33,9 +32,7 @@ func findFingers(dhtNode *DHTNode) *FingerTable {
 		//if i == 0 {
 		//fmt.Println("INITING A LOOkUP")
 		go dhtNode.lookup(fingerHex)
-		/*}  else {
-			dhtNode.transport.send(createMsg("lookup", fingerHex, src, nodes[i-1].address, src))
-		}*/
+
 		for found != 1 {
 			select {
 			case s := <-dhtNode.sm:

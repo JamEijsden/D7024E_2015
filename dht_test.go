@@ -10,7 +10,9 @@ import (
 func (node *DHTNode) joinRequest(dhtNode *DHTNode) {
 	rec := dhtNode.contact.ip + ":" + dhtNode.contact.port
 	go node.sendMsg("request", rec)
-	time.Sleep(time.Millisecond * 10)
+	//retry := time.Timer(time.Millisecond.500)
+	//time.Sleep(time.Millisecond * 500)
+
 	/*if node.succ[1] == "" {
 		fmt.Println("NOOOPE")
 		go node.sendMsg("request", rec)
@@ -32,12 +34,19 @@ func TestNetwork(t *testing.T) {
 	id8 := "07"
 
 	node0 := makeDHTNode(&id1, "localhost", "1110")
+	time.Sleep(time.Millisecond * 500)
 	node1 := makeDHTNode(&id2, "localhost", "1111")
+	time.Sleep(time.Millisecond * 500)
 	node2 := makeDHTNode(&id3, "localhost", "1112")
+	time.Sleep(time.Millisecond * 500)
 	node3 := makeDHTNode(&id4, "localhost", "1113")
+	time.Sleep(time.Millisecond * 500)
 	node4 := makeDHTNode(&id5, "localhost", "1114")
+	time.Sleep(time.Millisecond * 500)
 	node5 := makeDHTNode(&id6, "localhost", "1115")
+	time.Sleep(time.Millisecond * 500)
 	node6 := makeDHTNode(&id7, "localhost", "1116")
+	time.Sleep(time.Millisecond * 500)
 	node7 := makeDHTNode(&id8, "localhost", "1117")
 	/*
 		node1 := makeDHTNode(nil, "localhost", "1111")
@@ -71,15 +80,16 @@ func TestNetwork(t *testing.T) {
 
 	node5.joinRequest(node0)
 
-	node4.joinRequest(node0)
 	//time.Sleep(time.Millisecond * 3000)
 	node6.joinRequest(node0)
 	node7.joinRequest(node0)
 	//node0.QueueTask(createTask("print", createMsg("", "", "1", "", "")))
 
 	time.Sleep(time.Second * 10)
-	node5.leaveRing()
-
+	node4.joinRequest(node0)
+	//node5.leaveRing()
+	//node5.nodeFail()
+	//go node7.heartbeatHandler()
 	/*fmt.Println(node1)
 	fmt.Println(node2)
 	fmt.Println(node3)
@@ -91,7 +101,7 @@ func TestNetwork(t *testing.T) {
 	//findFingers(node1)
 	//printFingers(findFingers(node1))
 	//printFingers(node2.fingers)
-	node1.fingerLookup("00")
+	//node1.fingerLookup("00")
 	/*
 		fmt.Println(node1.contact.port + "> " + node1.pred[0] + " " + node1.succ[0])
 		fmt.Println(node2.contact.port + "> " + node2.pred[0] + " " + node2.succ[0])
@@ -115,6 +125,11 @@ func TestNetwork(t *testing.T) {
 	if string(b) == "q" {
 		return
 	} */
+}
+
+func (dhtNode *DHTNode) heartbeatRespons(msg *Msg) {
+	src := dhtNode.contact.ip + ":" + dhtNode.contact.port
+	dhtNode.transport.send(createMsg("heartbeat_respons", dhtNode.nodeId, src, msg.Src, msg.Origin))
 }
 
 func printFingers(node *DHTNode) {
