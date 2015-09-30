@@ -17,6 +17,14 @@ type Finger struct {
 	address string
 }
 
+func fixFingers(dhtNode *DHTNode) {
+	if dhtNode.fingers.fingerList[0] == nil {
+		dhtNode.fingers = findFingers(dhtNode)
+	} else {
+		updateFingers(dhtNode)
+	}
+}
+
 func findFingers(dhtNode *DHTNode) *FingerTable {
 	fmt.Print("")
 	//fmt.Println(dhtNode)
@@ -63,14 +71,11 @@ func updateFingers(dhtNode *DHTNode) {
 	src := dhtNode.contact.ip + ":" + dhtNode.contact.port
 	for i := 0; i < BITS; i++ {
 
-		// defer m.Unlock()
 		if dhtNode.fingers.fingerList[i] != nil {
 
 			idBytes, _ := hex.DecodeString(dhtNode.nodeId)
 			fingerHex, _ := calcFinger(idBytes, (i + 1), BITS)
-			//IF finger havent changed, dont bother lookup
-			//fmt.Println(dhtNode.fingers.fingerList[i])
-			//if fingerHex != dhtNode.fingers.fingerList[i].hash {
+
 			if i == 0 {
 				go dhtNode.lookup(fingerHex)
 			} else {
@@ -79,24 +84,15 @@ func updateFingers(dhtNode *DHTNode) {
 			for found != 1 {
 				select {
 				case s := <-dhtNode.sm:
-					//fmt.Println(s)
-					//		fmt.Print(dhtNode.nodeId + "> " + fingerHex + " =? ")
-					//		fmt.Print(s)
-					//		fmt.Println("")
+
 					found = 1
 					dhtNode.fingers.fingerList[i] = s
 				}
 			}
 			found = 0
-			//} else {
-			//fmt.Println(fingerHex + " =keep? " + dhtNode.fingers.fingerList[i].hash)
 
-			//}
 		}
-		//fingerSuccessorBytes, _ := hex.DecodeString(fingerSuccessor.nodeId)
-		//dist := distance(idBytes, fingerSuccessorBytes, BITS)
-		//fmt.Printf(fingerSuccessor.nodeId + " ")
-		//fmt.Print(nodes[i].nodeId + " ")
+
 	}
 	/*go func() {
 		fmt.Print(dhtNode.nodeId)

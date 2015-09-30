@@ -67,7 +67,8 @@ func makeDHTNode(nodeId *string, ip string, port string) *DHTNode {
 	dhtNode.transport = CreateTransport(dhtNode, bindAdr)
 	go dhtNode.transport.processMsg()
 	go dhtNode.taskHandler()
-	go dhtNode.updateTimer()
+	go dhtNode.stabilizeTimer()
+	go dhtNode.fingerTimer()
 
 	return dhtNode
 }
@@ -165,11 +166,11 @@ func (dhtNode *DHTNode) stabi() {
 				dhtNode.succ[1] = r.Origin
 			}
 			go dhtNode.transport.send(createMsg("notify", dhtNode.nodeId, sender, dhtNode.succ[1], sender))
-			fmt.Print(dhtNode.nodeId + ">  ")
+			/*fmt.Print(dhtNode.nodeId + ">  ")
 			fmt.Print(dhtNode.pred)
 			fmt.Print(" - ")
 			fmt.Println(dhtNode.succ)
-			return
+			*/return
 		}
 	}
 
@@ -372,6 +373,7 @@ func (dhtNode *DHTNode) stabilizeForward(msg *Msg) {
 	go updateFingers(dhtNode)
 	if src != msg.Origin {
 		dhtNode.transport.send(createMsg("stabilize", dhtNode.nodeId, src, dhtNode.succ[1], msg.Origin))
+
 	}
 }
 
@@ -403,8 +405,9 @@ func (dhtNode *DHTNode) taskHandler() {
 
 				case "reconn":
 					dhtNode.reconnNodes(t.M)
-				case "findFingers":
-					dhtNode.fingers = findFingers(dhtNode)
+				case "fixFingers":
+					fixFingers(dhtNode)
+
 					//time.Sleep(time.Millisecond * 500)
 				case "notify":
 					//dhtNode.stabilize()
@@ -433,18 +436,26 @@ func (dhtNode *DHTNode) taskHandler() {
 	}
 }
 
-func (dhtNode *DHTNode) updateTimer() {
+func (dhtNode *DHTNode) stabilizeTimer() {
 	//src := dhtNode.contact.ip + ":" + dhtNode.contact.port
 	for {
-		time.Sleep(time.Millisecond * 5000)
+		time.Sleep(time.Millisecond * 1000)
 		//dhtNode.transport.send(createMsg("notify", dhtNode.nodeId, src, dhtNode.succ[1], src))
-		go func() {
-			dhtNode.QueueTask(createTask("stabilize", nil))
-		}()
+		go dhtNode.QueueTask(createTask("stabilize", nil))
+
 		//dhtNode.QueueTask(createTask("print", createMsg("", "", "1", "", "")))
 		//go dhtNode.QueueTask(createTask("startStabilize", nil))
 	}
 
+}
+func (dhtNode *DHTNode) fingerTimer() {
+	for {
+		time.Sleep(time.Second * 2)
+		go dhtNode.QueueTask(createTask("fixFingers", nil))
+		if dhtNode.nodeId == "00" {
+			dhtNode.QueueTask(createTask("print", createMsg("", "", "1", "", "")))
+		}
+	}
 }
 
 /******************************************************************

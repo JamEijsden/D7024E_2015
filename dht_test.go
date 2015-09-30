@@ -34,19 +34,19 @@ func TestNetwork(t *testing.T) {
 	id8 := "07"
 
 	node0 := makeDHTNode(&id1, "localhost", "1110")
-	time.Sleep(time.Millisecond * 500)
+
 	node1 := makeDHTNode(&id2, "localhost", "1111")
-	time.Sleep(time.Millisecond * 500)
+
 	node2 := makeDHTNode(&id3, "localhost", "1112")
-	time.Sleep(time.Millisecond * 500)
+
 	node3 := makeDHTNode(&id4, "localhost", "1113")
-	time.Sleep(time.Millisecond * 500)
+
 	node4 := makeDHTNode(&id5, "localhost", "1114")
-	time.Sleep(time.Millisecond * 500)
+
 	node5 := makeDHTNode(&id6, "localhost", "1115")
-	time.Sleep(time.Millisecond * 500)
+
 	node6 := makeDHTNode(&id7, "localhost", "1116")
-	time.Sleep(time.Millisecond * 500)
+
 	node7 := makeDHTNode(&id8, "localhost", "1117")
 	/*
 		node1 := makeDHTNode(nil, "localhost", "1111")
@@ -90,6 +90,8 @@ func TestNetwork(t *testing.T) {
 	//node5.leaveRing()
 	//node5.nodeFail()
 	//go node7.heartbeatHandler()
+
+	//node0.QueueTask(createTask("print", createMsg("print", "", "", "1", "")))
 	/*fmt.Println(node1)
 	fmt.Println(node2)
 	fmt.Println(node3)
