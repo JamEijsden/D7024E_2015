@@ -67,11 +67,15 @@ func makeDHTNode(nodeId *string, ip string, port string) *DHTNode {
 	dhtNode.fingers = new(FingerTable)
 	dhtNode.fingers.fingerList = [BITS]*Finger{}
 	dhtNode.transport = CreateTransport(dhtNode, bindAdr)
+	go initStorage(dhtNode)
 	go dhtNode.transport.processMsg()
 	go dhtNode.taskHandler()
 	go dhtNode.stabilizeTimer()
 	go dhtNode.fingerTimer()
-
+	go func() {
+		time.Sleep(time.Second * 1)
+		//go dhtNode.heartbeatHandler()
+	}()
 	return dhtNode
 }
 func (dhtNode *DHTNode) startServer(wg *sync.WaitGroup) {
@@ -123,13 +127,14 @@ func (dhtNode *DHTNode) printRing(msg *Msg) {
 	src := dhtNode.contact.ip + ":" + dhtNode.contact.port
 	if msg.Type == "" {
 		fmt.Println(dhtNode)
-		dhtNode.printFingers()
+		//dhtNode.printFingers()
 		fmt.Print("\n")
 		dhtNode.transport.send(createMsg("print", "", src, dhtNode.succ[1], src))
 	} else if src != msg.Origin {
 		fmt.Println(dhtNode)
-		dhtNode.printFingers()
+		//dhtNode.printFingers()
 		fmt.Print("\n")
+
 		dhtNode.transport.send(createMsg("print", "", src, dhtNode.succ[1], msg.Origin))
 
 	} else {
@@ -258,11 +263,16 @@ func (dhtNode *DHTNode) findSuccessorjoin(msg *Msg) {
 		go dhtNode.QueueTask(createTask("init", msg))
 
 		//KLAR
+<<<<<<< HEAD
 	}if msg.Type == "done" {
 		//go dhtNode.heartbeatHandler()
+=======
+	}*/if msg.Type == "done" {
+
+>>>>>>> cdd7d224e2a8add7665b4a8df86ee95c4200d9eb
 		fmt.Println(dhtNode.succ[0] + "<- succ :" + dhtNode.nodeId + ": pred -> " + dhtNode.pred[0] + "\n")
 	} else {
-		//fmt.Println("Beginning join..") //onändlig loop, msg.Type är alltid request i queueTask.
+
 		msg.Type = "join"
 		go dhtNode.QueueTask(createTask("join", msg))
 		//}
@@ -272,17 +282,6 @@ func (dhtNode *DHTNode) findSuccessorjoin(msg *Msg) {
 */
 func (dhtNode *DHTNode) reconnNodes(msg *Msg) {
 	switch msg.Type {
-	case "pred":
-		if msg.Src == msg.Origin {
-			dhtNode.pred[0] = msg.Key
-			dhtNode.pred[1] = msg.Src
-		} else {
-			dhtNode.pred[0] = msg.Key
-			dhtNode.pred[1] = msg.Origin
-		}
-		dhtNode.pred[0] = msg.Key
-
-	//	fmt.Println(dhtNode.nodeId + "> Reconnected predecessor, " + msg.Key + "\n")
 	case "succ":
 
 		if msg.Src == msg.Origin {
@@ -511,6 +510,8 @@ func (dhtNode *DHTNode) taskHandler() {
 						nMsg.Type = "pred"
 						dhtNode.reconnNodes(nMsg)
 					}
+				case "heartbeat":
+					dhtNode.doHeartbeat()
 				}
 			}
 		}
@@ -520,7 +521,14 @@ func (dhtNode *DHTNode) taskHandler() {
 func (dhtNode *DHTNode) stabilizeTimer() {
 	//src := dhtNode.contact.ip + ":" + dhtNode.contact.port
 	for {
+<<<<<<< HEAD
 		time.Sleep(time.Millisecond * 500)
+=======
+		if dhtNode.online != 1 {
+			return
+		}
+		time.Sleep(time.Millisecond * 1000)
+>>>>>>> cdd7d224e2a8add7665b4a8df86ee95c4200d9eb
 		//dhtNode.transport.send(createMsg("notify", dhtNode.nodeId, src, dhtNode.succ[1], src))
 		go dhtNode.QueueTask(createTask("stabilize", nil))
 
@@ -530,13 +538,14 @@ func (dhtNode *DHTNode) stabilizeTimer() {
 
 }
 func (dhtNode *DHTNode) fingerTimer() {
-	for {
-		time.Sleep(time.Second * 2)
-		go dhtNode.QueueTask(createTask("fixFingers", nil))
-		if dhtNode.nodeId == "00" {
-			dhtNode.QueueTask(createTask("print", createMsg("", "", "1", "", "")))
-		}
+	//for {
+	if dhtNode.online != 1 {
+		return
 	}
+	time.Sleep(time.Second * 10)
+	go dhtNode.QueueTask(createTask("fixFingers", nil))
+
+	//}
 }
 
 /******************************************************************
@@ -566,40 +575,52 @@ func (dhtNode *DHTNode) nodeFail() {
 }
 
 func (dhtNode *DHTNode) heartbeatHandler() {
+	if dhtNode.online != 1 {
+		return
+	}
+
+	for {
+		if dhtNode.online != 0 {
+			time.Sleep(time.Millisecond * 2000)
+			go dhtNode.QueueTask(createTask("heartbeat", nil))
+
+		}
+	}
+}
+func (dhtNode *DHTNode) doHeartbeat() {
 	src := dhtNode.contact.ip + ":" + dhtNode.contact.port
 	respons := false
 	state := ""
 	var waitRespons *time.Timer
-	for {
-		if dhtNode.online != 0 {
-			time.Sleep(time.Millisecond * 2000)
-			go dhtNode.transport.send(createMsg("heartbeat", dhtNode.nodeId, src, dhtNode.pred[1], src))
+	if dhtNode.pred[0] != "" {
+		go dhtNode.transport.send(createMsg("heartbeat", dhtNode.nodeId, src, dhtNode.pred[1], src))
 
-			waitRespons = time.NewTimer(time.Millisecond * 200)
-			for !respons {
-				select {
-				case r := <-dhtNode.heartbeat:
-					r = r
-					fmt.Println(dhtNode.nodeId + "> " + r + " is alive!")
-					respons = true
-					state = "alive"
-				case c := <-waitRespons.C:
-					//fmt.Println(c)
-					c = c
-					fmt.Println(dhtNode.nodeId + "> Didnt recieve respons")
-					respons = true
-					state = "dead"
-				}
+		waitRespons = time.NewTimer(time.Millisecond * 200)
+		for !respons {
+			select {
+			case r := <-dhtNode.heartbeat:
+				r = r
+				fmt.Println(dhtNode.nodeId + "> " + r + " is alive!")
+				respons = true
+				state = "alive"
+			case c := <-waitRespons.C:
+				//fmt.Println(c)
+				c = c
+				fmt.Println(dhtNode.nodeId + "> Didnt recieve respons")
+				respons = true
+				state = "dead"
 			}
-			if state == "dead" {
-				fmt.Println("go dhtNode.QueueTask()")
-				//dhtNode.transport.send(createMsg("fail", "", s, d, o))
-
-			} else {
-				//fmt.Println(state)
-			}
-			respons = false
-			state = ""
 		}
+		if state == "dead" {
+			//fmt.Println("go dhtNode.QueueTask()")
+			dhtNode.pred[0] = ""
+			dhtNode.pred[1] = ""
+			//dhtNode.transport.send(createMsg("fail", "", s, d, o))
+
+		} else {
+			//fmt.Println(state)
+		}
+		respons = false
+		state = ""
 	}
 }
