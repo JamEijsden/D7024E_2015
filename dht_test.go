@@ -9,9 +9,10 @@ import (
 
 func (node *DHTNode) joinRequest(dhtNode *DHTNode) {
 	rec := dhtNode.contact.ip + ":" + dhtNode.contact.port
-	go node.sendMsg("request", rec)
+	//go node.sendMsg("request", rec)
+	go node.join(rec)
 	//retry := time.Timer(time.Millisecond.500)
-	//time.Sleep(time.Millisecond * 500)
+	time.Sleep(time.Millisecond * 500)
 
 	/*if node.succ[1] == "" {
 		fmt.Println("NOOOPE")
@@ -78,6 +79,8 @@ func TestNetwork(t *testing.T) {
 
 	node3.joinRequest(node0)
 
+	node4.joinRequest(node0)
+
 	node5.joinRequest(node0)
 
 	//time.Sleep(time.Millisecond * 3000)
@@ -85,8 +88,8 @@ func TestNetwork(t *testing.T) {
 	node7.joinRequest(node0)
 	//node0.QueueTask(createTask("print", createMsg("", "", "1", "", "")))
 
-	time.Sleep(time.Second * 10)
-	node4.joinRequest(node0)
+	//time.Sleep(time.Second * 3)
+	//node1.fingerLookup("01")
 	//node5.leaveRing()
 	//node5.nodeFail()
 	//go node7.heartbeatHandler()

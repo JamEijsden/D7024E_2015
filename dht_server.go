@@ -34,14 +34,17 @@ func (transport *Transport) processMsg() {
 					case "init":
 						//fmt.Println(transport.node.nodeId + " INITING")
 						go transport.node.QueueTask(createTask("init", m))
-					case "join", "request", "done":
+					case "done":
 						//fmt.Println(m.Key)
-						go transport.node.QueueTask(createTask("join", m))
+						//go transport.node.QueueTask(createTask("join", m))
 					case "pred":
 						src := transport.node.contact.ip + ":" + transport.node.contact.port
 						go transport.send(createMsg("response", transport.node.pred[0], src, m.Origin, transport.node.pred[1]))
+					case "foundSucc":
+						go transport.node.successorFound(&Finger{m.Key, m.Origin})
 					case "succ":
-						transport.node.QueueTask(createTask("reconn", m))
+						go transport.node.successorFound(&Finger{m.Key, m.Origin})
+						//transport.node.QueueTask(createTask("reconn", m))
 					case "lookup":
 						//go transport.node.QueueTask(createTask("lookup", m))
 						go transport.node.lookupForward(m)
@@ -71,6 +74,16 @@ func (transport *Transport) processMsg() {
 						}()
 					case "heartbeat":
 						go transport.node.heartbeatRespons(m)
+
+						//go transport.node.QueueTask(createTask("foundSucc", m))
+					case "findSucc":
+						//go transport.node.findSuccessorjoin(msg)
+						if m.Src == m.Origin {
+							go transport.node.QueueTask(createTask("findSucc", m))
+						} else {
+							go transport.node.findSuccessorjoin(m)
+
+						}
 					case "heartbeat_respons":
 						go func() {
 							transport.node.heartbeat <- m.Key
