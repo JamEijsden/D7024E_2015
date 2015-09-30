@@ -32,7 +32,7 @@ func createMsg(t, k, s, d, o string) *Msg {
 	return msg
 }
 
-func createReplyMsg(k, s, d string) *Msg {
+func createData(k, s, d string) *Msg {
 	msg := createMsg("reply", k, s, d, s)
 	return msg
 }
