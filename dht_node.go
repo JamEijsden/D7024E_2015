@@ -74,7 +74,7 @@ func makeDHTNode(nodeId *string, ip string, port string) *DHTNode {
 	go dhtNode.fingerTimer()
 	go func() {
 		time.Sleep(time.Second * 1)
-		//go dhtNode.heartbeatHandler()
+		go dhtNode.heartbeatHandler()
 	}()
 	return dhtNode
 }
@@ -124,6 +124,7 @@ func (dhtNode *DHTNode) initRing(msg *Msg) {
 }*/
 
 func (dhtNode *DHTNode) printRing(msg *Msg) {
+	fmt.Println("print ring loop")
 	src := dhtNode.contact.ip + ":" + dhtNode.contact.port
 	if msg.Type == "" {
 		fmt.Println(dhtNode)
@@ -151,7 +152,6 @@ func (dhtNode *DHTNode) printFingers() {
 }
 
 func (dhtNode *DHTNode) notify(msg *Msg) {
-
 	if dhtNode.pred[0] == "" || between([]byte(dhtNode.pred[0]), []byte(dhtNode.nodeId), []byte(msg.Key)) {
 		dhtNode.pred[0] = msg.Key
 		dhtNode.pred[1] = msg.Src
@@ -164,6 +164,7 @@ func (dhtNode *DHTNode) notify(msg *Msg) {
 func (dhtNode *DHTNode) stabi() {
 	sender := dhtNode.contact.ip + ":" + dhtNode.contact.port
 	dhtNode.transport.send(createMsg("pred", dhtNode.nodeId, sender, dhtNode.succ[1], sender))
+	waitRespons := time.NewTimer(time.Millisecond * 300)
 	for {
 		select {
 		case r := <-dhtNode.responseMsg:
@@ -173,11 +174,12 @@ func (dhtNode *DHTNode) stabi() {
 				dhtNode.succ[1] = r.Origin
 			}
 			go dhtNode.transport.send(createMsg("notify", dhtNode.nodeId, sender, dhtNode.succ[1], sender))
-			/*fmt.Print(dhtNode.nodeId + ">  ")
-			fmt.Print(dhtNode.pred)
-			fmt.Print(" - ")
-			fmt.Println(dhtNode.succ)
-			*/return
+			return
+		case s := <-waitRespons.C:
+			s = s
+			fmt.Print("no respons from: ")
+			fmt.Println(dhtNode.succ[1])
+			return
 		}
 	}
 
@@ -196,7 +198,13 @@ func (dhtNode *DHTNode) join(adr string) {
 			//fmt.Println(s)
 			dhtNode.succ[0] = s.hash
 			dhtNode.succ[1] = s.address
-			return
+			var nodes [len(dhtNode.fingers.fingerList)]*Finger
+			if dhtNode.fingers.fingerList[0] == nil {
+				for i := 0; i < len(dhtNode.fingers.fingerList); i++ {
+					nodes[i] = &Finger{dhtNode.succ[0], dhtNode.succ[1]}
+				}
+				dhtNode.fingers = &FingerTable{nodes}
+			}
 		}
 	}
 }
@@ -236,7 +244,7 @@ func (dhtNode *DHTNode) findSuccessorjoin(msg *Msg) {
 		result = between([]byte(dhtNode.nodeId), []byte(dhtNode.succ[0]), []byte(msg.Key))
 
 	} else if dhtNode.succ[0] == dhtNode.nodeId {
-		//	fmt.Println(dhtNode.nodeId + "> SELFPOINTER")
+
 		result = true
 	}
 	//go dhtNode.transport.send(createMsg("findSucc", dhtNode.succ[0], dhtNode, dhtNode.succ[1], msg.Origin))
@@ -265,6 +273,7 @@ func (dhtNode *DHTNode) findSuccessorjoin(msg *Msg) {
 		//KLAR
 
 
+
 	}if msg.Type == "done" {
 
 
@@ -275,13 +284,14 @@ func (dhtNode *DHTNode) findSuccessorjoin(msg *Msg) {
 		go dhtNode.QueueTask(createTask("join", msg))
 		//}
 	}
+
+
 	//dhtNode.fingers = findFingers(dhtNode)
-}
-*/
+} */
+
 func (dhtNode *DHTNode) reconnNodes(msg *Msg) {
 	switch msg.Type {
 	case "succ":
-
 		if msg.Src == msg.Origin {
 			dhtNode.succ[0] = msg.Key
 			dhtNode.succ[1] = msg.Src
@@ -519,6 +529,7 @@ func (dhtNode *DHTNode) taskHandler() {
 func (dhtNode *DHTNode) stabilizeTimer() {
 	//src := dhtNode.contact.ip + ":" + dhtNode.contact.port
 	for {
+
 		if dhtNode.online != 1 {
 			return
 		}
@@ -526,22 +537,39 @@ func (dhtNode *DHTNode) stabilizeTimer() {
 		//dhtNode.transport.send(createMsg("notify", dhtNode.nodeId, src, dhtNode.succ[1], src))
 		go dhtNode.QueueTask(createTask("stabilize", nil))
 
+		}
 		//dhtNode.QueueTask(createTask("print", createMsg("", "", "1", "", "")))
 		//go dhtNode.QueueTask(createTask("startStabilize", nil))
 	}
 
 }
 func (dhtNode *DHTNode) fingerTimer() {
-	//for {
-	if dhtNode.online != 1 {
-		return
+	sender := dhtNode.contact.ip + ":" + dhtNode.contact.port
+	var nodes [len(dhtNode.fingers.fingerList)]*Finger
+	if dhtNode.fingers.fingerList[0] == nil {
+		for i := 0; i < len(dhtNode.fingers.fingerList); i++ {
+			nodes[i] = &Finger{dhtNode.nodeId, sender}
+		}
+		/*fmt.Print("dhtNode: ")
+		fmt.Println(dhtNode)
+		fmt.Print("node[0]: ")
+		fmt.Println(nodes[0])
+		fmt.Print("node[1]: ")
+		fmt.Println(nodes[1])
+		fmt.Print("node[2]: ")
+		fmt.Println(nodes[2])*/
+		dhtNode.fingers = &FingerTable{nodes}
 	}
-	time.Sleep(time.Second * 3)
-	go dhtNode.QueueTask(createTask("fixFingers", nil))
+	//for {
+	if dhtNode.online != 0 {
 
-	//}
+
+		time.Sleep(time.Second * 3)
+		go dhtNode.QueueTask(createTask("fixFingers", nil))
+	}
 }
 
+//}
 /******************************************************************
 ***************************** NODE LEAVE **************************
 *******************************************************************/
@@ -566,12 +594,10 @@ func (dhtNode *DHTNode) leaveRing() {
 
 func (dhtNode *DHTNode) nodeFail() {
 	dhtNode.online = 0
+	//go dhtNode.transport.killConnection()
 }
 
 func (dhtNode *DHTNode) heartbeatHandler() {
-	if dhtNode.online != 1 {
-		return
-	}
 
 	for {
 		if dhtNode.online != 0 {
@@ -587,25 +613,33 @@ func (dhtNode *DHTNode) doHeartbeat() {
 	state := ""
 	var waitRespons *time.Timer
 	if dhtNode.pred[0] != "" {
-		go dhtNode.transport.send(createMsg("heartbeat", dhtNode.nodeId, src, dhtNode.pred[1], src))
+		dhtNode.transport.send(createMsg("heartbeat", dhtNode.nodeId, src, dhtNode.pred[1], src))
 
-		waitRespons = time.NewTimer(time.Millisecond * 200)
+		waitRespons = time.NewTimer(time.Millisecond * 300)
 		for !respons {
 			select {
 			case r := <-dhtNode.heartbeat:
 				r = r
-				fmt.Println(dhtNode.nodeId + "> " + r + " is alive!")
-				respons = true
+				//fmt.Println(dhtNode.nodeId + "> " + r + " is alive!")
 				state = "alive"
-			case c := <-waitRespons.C:
-				//fmt.Println(c)
-				c = c
-				fmt.Println(dhtNode.nodeId + "> Didnt recieve respons")
 				respons = true
-				state = "dead"
+			case c := <-waitRespons.C:
+				c = c
+				if dhtNode.online == 1 {
+
+					fmt.Print(src)
+					fmt.Print(" says: ")
+					fmt.Print(dhtNode.pred[1])
+					fmt.Println(" is dead")
+					state = "dead"
+					//fmt.Println(dhtNode.nodeId + "> Didn't get a response.")
+					respons = true
+				}
 			}
 		}
 		if state == "dead" {
+			//fmt.Print("dead: ")
+			//fmt.Println(dhtNode.pred[1])
 			//fmt.Println("go dhtNode.QueueTask()")
 			dhtNode.pred[0] = ""
 			dhtNode.pred[1] = ""

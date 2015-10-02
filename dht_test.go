@@ -90,44 +90,50 @@ func TestNetwork(t *testing.T) {
 	fmt.Println(generateNodeId("localhost:1112"))
 
 	//joinRing(node1, &wg)
-	node1.joinRequest(node0)
-
 	//
+	node1.joinRequest(node0)
 
 	node2.joinRequest(node0)
 
 	node3.joinRequest(node0)
+	printFingers(node0)
 
 	node4.joinRequest(node0)
 
 	node5.joinRequest(node0)
 
-	//time.Sleep(time.Millisecond * 3000)
 	node6.joinRequest(node0)
+
 	node7.joinRequest(node0)
+
+	//time.Sleep(time.Second * 5)
 	//node0.QueueTask(createTask("print", createMsg("", "", "1", "", "")))
+	//time.Sleep(time.Second * 5)
+	time.Sleep(time.Second * 2)
+	printFingers(node0)
+	//go node4.nodeFail()
 
 	node4.joinRequest(node0)
 	time.Sleep(time.Second * 5)
 	sendData(node5)
 	node0.QueueTask(createTask("print", createMsg("", "", "1", "", "")))
 
+	//fmt.Println("============================= closed node 4 ==========================")
+
+	//node0.QueueTask(createTask("print", createMsg("", "", "1", "", "")))
+	//time.Sleep(time.Second * 3)
+	//fmt.Print("We printed node4.nodeId: ")
+	//fmt.Println(node4.nodeId)
+
+	//node0.QueueTask(createTask("print", createMsg("", "", "1", "", "")))
+
 	//node6.leaveRing()
 	//node5.nodeFail()
 	//go node7.heartbeatHandler()
 
 	//node0.QueueTask(createTask("print", createMsg("print", "", "", "1", "")))
-	/*fmt.Println(node1)
-	fmt.Println(node2)
-	fmt.Println(node3)
-	fmt.Println(node4)
-	fmt.Println(node5)
-	fmt.Println(node6)
-	fmt.Println(node7)
-	*/
-	//findFingers(node1)
+
 	//printFingers(findFingers(node1))
-	//printFingers(node2.fingers)
 	//node1.fingerLookup("00")
 	/*
 		fmt.Println(node1.contact.port + "> " + node1.pred[0] + " " + node1.succ[0])

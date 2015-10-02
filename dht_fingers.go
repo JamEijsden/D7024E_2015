@@ -26,11 +26,11 @@ func fixFingers(dhtNode *DHTNode) {
 }
 
 func findFingers(dhtNode *DHTNode) *FingerTable {
-	fmt.Print("")
-	//fmt.Println(dhtNode)
 	var nodes [BITS]*Finger
 	var found int
 	for i := 0; i < BITS; i++ {
+		fmt.Print("")
+		//fmt.Println(dhtNode.fingers.fingerList)
 		idBytes, _ := hex.DecodeString(dhtNode.nodeId)
 		fingerHex, _ := calcFinger(idBytes, (i + 1), BITS)
 		//fmt.Println(dhtNode.nodeId + ": FINGERHEX: " + fingerHex)
@@ -40,11 +40,9 @@ func findFingers(dhtNode *DHTNode) *FingerTable {
 		//if i == 0 {
 		//fmt.Println("INITING A LOOkUP")
 		go dhtNode.lookup(fingerHex)
-
 		for found != 1 {
 			select {
 			case s := <-dhtNode.sm:
-				//fmt.Println(s)
 				if dhtNode.nodeId == s.hash {
 					nodes[i] = &Finger{dhtNode.pred[0], dhtNode.pred[1]}
 				} else {
