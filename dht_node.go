@@ -221,6 +221,7 @@ func (dhtNode *DHTNode) startFindSucc(msg *Msg) {
 		dhtNode.transport.send(m)
 	} else {
 		//fmt.Println(dhtNode.nodeId + "> FORWARD " + msg.Key)
+		fmt.Println(dhtNode.nodeId)
 		dhtNode.transport.send(createMsg("findSucc", msg.Key, msg.Origin, dhtNode.succ[1], sender))
 		for {
 			select {
