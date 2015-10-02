@@ -56,7 +56,7 @@ func makeDHTNode(nodeId *string, ip string, port string) *DHTNode {
 	dhtNode.succChan = make(chan *Finger)
 	dhtNode.initiated = 0
 	if nodeId == nil {
-		genNodeId := generateNodeId()
+		genNodeId := generateNodeId(bindAdr)
 		dhtNode.nodeId = genNodeId
 	} else {
 		dhtNode.nodeId = *nodeId
@@ -192,8 +192,8 @@ func (dhtNode *DHTNode) join(adr string) {
 	for {
 		select {
 		case s := <-dhtNode.succChan:
-			fmt.Print(dhtNode.nodeId + "> succ set: ")
-			fmt.Println(s)
+			//fmt.Print(dhtNode.nodeId + "> succ set: ")
+			//fmt.Println(s)
 			dhtNode.succ[0] = s.hash
 			dhtNode.succ[1] = s.address
 			return
@@ -204,20 +204,20 @@ func (dhtNode *DHTNode) startFindSucc(msg *Msg) {
 	sender := dhtNode.contact.ip + ":" + dhtNode.contact.port
 	m := createMsg("foundSucc", dhtNode.succ[0], sender, msg.Origin, dhtNode.succ[1])
 	if dhtNode.succ[0] != dhtNode.nodeId && between([]byte(dhtNode.nodeId), []byte(dhtNode.succ[0]), []byte(msg.Key)) {
-		fmt.Println(dhtNode.nodeId + " BETWEEN " + msg.Key)
+		//fmt.Println(dhtNode.nodeId + " BETWEEN " + msg.Key)
 		dhtNode.transport.send(m)
 	} else if dhtNode.nodeId == dhtNode.succ[0] {
-		fmt.Println(dhtNode.nodeId + " SELFPOINTER " + msg.Key)
+		//fmt.Println(dhtNode.nodeId + " SELFPOINTER " + msg.Key)
 
 		//fmt.Println(m)
 		dhtNode.transport.send(m)
 	} else {
-		fmt.Println(dhtNode.nodeId + "> FORWARD " + msg.Key)
+		//fmt.Println(dhtNode.nodeId + "> FORWARD " + msg.Key)
 		dhtNode.transport.send(createMsg("findSucc", msg.Key, msg.Origin, dhtNode.succ[1], sender))
 		for {
 			select {
 			case s := <-dhtNode.succChan:
-				fmt.Println(s)
+				//fmt.Println(s)
 				m = createMsg("foundSucc", s.hash, sender, msg.Origin, s.address)
 				dhtNode.transport.send(m)
 				return
@@ -228,7 +228,7 @@ func (dhtNode *DHTNode) startFindSucc(msg *Msg) {
 	dhtNode.succ[1] = msg.Origin
 }
 func (dhtNode *DHTNode) findSuccessorjoin(msg *Msg) {
-	fmt.Println(dhtNode.nodeId + " LOOKING FOR SUCC")
+	//fmt.Println(dhtNode.nodeId + " LOOKING FOR SUCC")
 	result := false
 	sender := dhtNode.contact.ip + ":" + dhtNode.contact.port
 	//dhtNode.transport.send(createMsg("succ", dhtNode.succ[0], sender, msg.Origin, dhtNode.succ[1]))
@@ -236,7 +236,7 @@ func (dhtNode *DHTNode) findSuccessorjoin(msg *Msg) {
 		result = between([]byte(dhtNode.nodeId), []byte(dhtNode.succ[0]), []byte(msg.Key))
 
 	} else if dhtNode.succ[0] == dhtNode.nodeId {
-		fmt.Println(dhtNode.nodeId + "> SELFPOINTER")
+		//	fmt.Println(dhtNode.nodeId + "> SELFPOINTER")
 		result = true
 	}
 	//go dhtNode.transport.send(createMsg("findSucc", dhtNode.succ[0], dhtNode, dhtNode.succ[1], msg.Origin))
@@ -263,13 +263,11 @@ func (dhtNode *DHTNode) findSuccessorjoin(msg *Msg) {
 		go dhtNode.QueueTask(createTask("init", msg))
 
 		//KLAR
-<<<<<<< HEAD
-	}if msg.Type == "done" {
-		//go dhtNode.heartbeatHandler()
-=======
-	}*/if msg.Type == "done" {
 
->>>>>>> cdd7d224e2a8add7665b4a8df86ee95c4200d9eb
+
+	}if msg.Type == "done" {
+
+
 		fmt.Println(dhtNode.succ[0] + "<- succ :" + dhtNode.nodeId + ": pred -> " + dhtNode.pred[0] + "\n")
 	} else {
 
@@ -521,14 +519,10 @@ func (dhtNode *DHTNode) taskHandler() {
 func (dhtNode *DHTNode) stabilizeTimer() {
 	//src := dhtNode.contact.ip + ":" + dhtNode.contact.port
 	for {
-<<<<<<< HEAD
-		time.Sleep(time.Millisecond * 500)
-=======
 		if dhtNode.online != 1 {
 			return
 		}
 		time.Sleep(time.Millisecond * 1000)
->>>>>>> cdd7d224e2a8add7665b4a8df86ee95c4200d9eb
 		//dhtNode.transport.send(createMsg("notify", dhtNode.nodeId, src, dhtNode.succ[1], src))
 		go dhtNode.QueueTask(createTask("stabilize", nil))
 
@@ -542,7 +536,7 @@ func (dhtNode *DHTNode) fingerTimer() {
 	if dhtNode.online != 1 {
 		return
 	}
-	time.Sleep(time.Second * 10)
+	time.Sleep(time.Second * 3)
 	go dhtNode.QueueTask(createTask("fixFingers", nil))
 
 	//}

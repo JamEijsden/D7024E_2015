@@ -85,6 +85,9 @@ func (transport *Transport) processMsg() {
 						go func() {
 							transport.node.heartbeat <- m.Key
 						}()
+
+					case "data":
+						go replicate(transport.node, m)
 					}
 				}
 			}
@@ -102,11 +105,11 @@ func (transport *Transport) listen() {
 	}
 	defer conn.Close()
 	dec := json.NewDecoder(conn) //decodes conn and adds to variable dec
+
 	for {
 		msg := Msg{}
 		err = dec.Decode(&msg) //decodes the message where the message adress is and adds an error msg if there's none.
 		//fmt.Println(transport.bindAddress + "> Received Message from " + msg.Src)
-		//fmt.Println(msg)
 		go func() {
 			transport.queue <- &msg
 		}()
@@ -127,6 +130,7 @@ func (transport *Transport) send(msg *Msg) {
 	}
 	//fmt.Println(msg)
 	bytes, err := json.Marshal(msg)
+
 	defer conn.Close()
 	_, err = conn.Write(bytes)
 	if err != nil {

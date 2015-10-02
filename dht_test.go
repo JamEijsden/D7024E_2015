@@ -24,31 +24,47 @@ func (node *DHTNode) joinRequest(dhtNode *DHTNode) {
 func TestNetwork(t *testing.T) {
 	fmt.Println("Beginning test..")
 	var wg sync.WaitGroup
+
+	id1 := "00"
+	id2 := "01"
+	id3 := "02"
+	id4 := "03"
+	id5 := "04"
+	id6 := "05"
+	id7 := "06"
+	id8 := "07"
 	/*
-		id1 := "00"
-		id2 := "01"
-		id3 := "02"
-		id4 := "03"
-		id5 := "04"
-		id6 := "05"
-		id7 := "06"
-		id8 := "07"
+		node0 := makeDHTNode(nil, "localhost", "1110")
+
+		node1 := makeDHTNode(nil, "localhost", "1111")
+
+		node2 := makeDHTNode(nil, "localhost", "1112")
+
+		node3 := makeDHTNode(nil, "localhost", "1113")
+
+		node4 := makeDHTNode(nil, "localhost", "1114")
+
+		node5 := makeDHTNode(nil, "localhost", "1115")
+
+		node6 := makeDHTNode(nil, "localhost", "1116")
+
+		node7 := makeDHTNode(nil, "localhost", "1117")
 	*/
-	node0 := makeDHTNode(nil, "localhost", "1110")
+	node0 := makeDHTNode(&id1, "localhost", "1110")
 
-	node1 := makeDHTNode(nil, "localhost", "1111")
+	node1 := makeDHTNode(&id2, "localhost", "1111")
 
-	node2 := makeDHTNode(nil, "localhost", "1112")
+	node2 := makeDHTNode(&id3, "localhost", "1112")
 
-	node3 := makeDHTNode(nil, "localhost", "1113")
+	node3 := makeDHTNode(&id4, "localhost", "1113")
 
-	node4 := makeDHTNode(nil, "localhost", "1114")
+	node4 := makeDHTNode(&id5, "localhost", "1114")
 
-	node5 := makeDHTNode(nil, "localhost", "1115")
+	node5 := makeDHTNode(&id6, "localhost", "1115")
 
-	node6 := makeDHTNode(nil, "localhost", "1116")
+	node6 := makeDHTNode(&id7, "localhost", "1116")
 
-	node7 := makeDHTNode(nil, "localhost", "1117")
+	node7 := makeDHTNode(&id8, "localhost", "1117")
 	/*
 		node1 := makeDHTNode(nil, "localhost", "1111")
 		node2 := makeDHTNode(nil, "localhost", "1112")
@@ -69,6 +85,9 @@ func TestNetwork(t *testing.T) {
 	go node6.startServer(&wg)
 	go node7.startServer(&wg)
 	wg.Wait()
+	fmt.Println(generateNodeId("localhost:1110"))
+	fmt.Println(generateNodeId("localhost:1111"))
+	fmt.Println(generateNodeId("localhost:1112"))
 
 	//joinRing(node1, &wg)
 	node1.joinRequest(node0)
@@ -89,8 +108,8 @@ func TestNetwork(t *testing.T) {
 	//node0.QueueTask(createTask("print", createMsg("", "", "1", "", "")))
 
 	node4.joinRequest(node0)
-	time.Sleep(time.Second * 15)
-
+	time.Sleep(time.Second * 5)
+	sendData(node5)
 	node0.QueueTask(createTask("print", createMsg("", "", "1", "", "")))
 
 	//node6.leaveRing()
