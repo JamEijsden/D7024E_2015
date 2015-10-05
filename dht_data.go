@@ -114,6 +114,7 @@ func replicate(dhtNode *DHTNode, msg *Msg) {
 			createDataFolder(path)
 
 		}
+		fmt.Println("I CRASHED HERE?")
 		if finfo.IsDir() {
 			fmt.Println(dhtNode.nodeId + "> Storage folder exists")
 			// it's a file
