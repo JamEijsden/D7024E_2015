@@ -105,7 +105,7 @@ func TestNetwork(t *testing.T) {
 	node0.QueueTask(createTask("print", createMsg("", "", "1", "", "")))
 	time.Sleep(time.Second * 5)
 	fmt.Println(hashString("wooot.txt"))
-	node0.fingerLookup(hashString("wooot.txt"))
+	node0.findSuccesor(hashString("wooot.txt"))
 	//sendData(node5)
 
 	time.Sleep(time.Second * 500)

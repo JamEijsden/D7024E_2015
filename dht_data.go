@@ -90,13 +90,13 @@ func fileDecode(dhtNode *DHTNode, data []byte, path string) {
 
 }
 
-func sendData(dhtNode *DHTNode) {
+/*func sendData(dhtNode *DHTNode) {
 	src := dhtNode.contact.ip + ":" + dhtNode.contact.port
 	data, name := loadData()
-	m := createDataMsg("data", name, src, "localhost:1116", src, data)
-	dhtNode.transport.send(m)
-}
 
+
+}
+*/
 func replicate(dhtNode *DHTNode, msg *Msg) {
 
 	if msg.Src != dhtNode.pred[1] || msg.Origin == dhtNode.pred[1] {
