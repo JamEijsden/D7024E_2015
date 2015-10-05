@@ -96,7 +96,7 @@ func TestNetwork(t *testing.T) {
 	node2.joinRequest(node0)
 
 	node3.joinRequest(node0)
-	printFingers(node0)
+	//printFingers(node0)
 
 	node4.joinRequest(node0)
 
@@ -107,16 +107,17 @@ func TestNetwork(t *testing.T) {
 	node7.joinRequest(node0)
 
 	//time.Sleep(time.Second * 5)
-	//node0.QueueTask(createTask("print", createMsg("", "", "1", "", "")))
 	//time.Sleep(time.Second * 5)
-	time.Sleep(time.Second * 2)
-	printFingers(node0)
+	time.Sleep(time.Second * 10)
+
+	//node0.QueueTask(createTask("print", createMsg("", "", "1", "", "")))
+	time.Sleep(time.Second * 1)
+	node1.fingerLookup("00")
+	//printFingers(node0)
 	//go node4.nodeFail()
 
-	node4.joinRequest(node0)
-	time.Sleep(time.Second * 5)
-	sendData(node5)
-	node0.QueueTask(createTask("print", createMsg("", "", "1", "", "")))
+	//node4.joinRequest(node0)
+	//sendData(node5)
 
 	//fmt.Println("============================= closed node 4 ==========================")
 
