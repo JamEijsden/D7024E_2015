@@ -107,6 +107,7 @@ func TestNetwork(t *testing.T) {
 	fmt.Println(hashString("wooot.txt"))
 	node0.fingerLookup(hashString("wooot.txt"))
 	//sendData(node5)
+
 	time.Sleep(time.Second * 500)
 
 }

@@ -128,12 +128,12 @@ func (dhtNode *DHTNode) printRing(msg *Msg) {
 	src := dhtNode.contact.ip + ":" + dhtNode.contact.port
 	if msg.Type == "" {
 		fmt.Println(dhtNode)
-		//dhtNode.printFingers()
+		dhtNode.printFingers()
 		fmt.Print("\n")
 		dhtNode.transport.send(createMsg("print", "", src, dhtNode.succ[1], src))
 	} else if src != msg.Origin {
 		fmt.Println(dhtNode)
-		//dhtNode.printFingers()
+		dhtNode.printFingers()
 		fmt.Print("\n")
 
 		dhtNode.transport.send(createMsg("print", "", src, dhtNode.succ[1], msg.Origin))
@@ -221,6 +221,7 @@ func (dhtNode *DHTNode) startFindSucc(msg *Msg) {
 		dhtNode.transport.send(m)
 	} else {
 		//fmt.Println(dhtNode.nodeId + "> FORWARD " + msg.Key)
+		fmt.Println(dhtNode.nodeId)
 		dhtNode.transport.send(createMsg("findSucc", msg.Key, msg.Origin, dhtNode.succ[1], sender))
 		for {
 			select {
@@ -352,7 +353,11 @@ func (dhtNode *DHTNode) responsible(key string) bool {
 	return isResponsible
 }
 
+<<<<<<< HEAD
 func (dhtNode *DHTNode) fingerLookup(key string) {
+=======
+func (dhtNode *DHTNode) fingerLookup(key string) { //FUNKAR PÅ VÅRT SÄTT
+>>>>>>> origin/master
 	fmt.Println("Looking up finger: ")
 	src := dhtNode.contact.ip + ":" + dhtNode.contact.port
 	found := 0
@@ -383,7 +388,11 @@ func (dhtNode *DHTNode) fingerLookup(key string) {
 	}
 }
 
+<<<<<<< HEAD
 func (dhtNode *DHTNode) fingerForward(msg *Msg) {
+=======
+func (dhtNode *DHTNode) fingerForward(msg *Msg) { //FUNKAR PÅ VÅRT SÄTT
+>>>>>>> origin/master
 	//fmt.Println(dhtNode.nodeId)
 	src := dhtNode.contact.ip + ":" + dhtNode.contact.port
 	if dhtNode.responsible(msg.Key) {
@@ -425,7 +434,11 @@ func (dhtNode *DHTNode) findSuccesor(key string) { //pred of inserting node.
 	}
 }
 
+<<<<<<< HEAD
 func (dhtNode *DHTNode) fingerForward1(msg *Msg) {
+=======
+/*func (dhtNode *DHTNode) fingerForward(msg *Msg) {
+>>>>>>> origin/master
 	//fmt.Println(dhtNode.nodeId)
 	src := dhtNode.contact.ip + ":" + dhtNode.contact.port
 	if dhtNode.responsible(msg.Key) {
@@ -446,7 +459,7 @@ func (dhtNode *DHTNode) fingerForward1(msg *Msg) {
 			}
 		}
 	}
-}
+}*/
 
 func (dhtNode *DHTNode) stabilize() {
 	src := dhtNode.contact.ip + ":" + dhtNode.contact.port
@@ -558,15 +571,20 @@ func (dhtNode *DHTNode) fingerTimer() {
 		fmt.Println(nodes[2])*/
 		dhtNode.fingers = &FingerTable{nodes}
 	}
-	//for {
-	if dhtNode.online != 0 {
 
-		time.Sleep(time.Second * 2)
-		go dhtNode.QueueTask(createTask("fixFingers", nil))
+	for {
+		if dhtNode.online != 0 {
+
+			time.Sleep(time.Second * 2)
+			go dhtNode.QueueTask(createTask("fixFingers", nil))
+			if dhtNode.nodeId == "00" {
+				dhtNode.QueueTask(createTask("print", createMsg("", "", "1", "", "")))
+			}
+		}
+
 	}
 }
 
-//}
 /******************************************************************
 ***************************** NODE LEAVE **************************
 *******************************************************************/
