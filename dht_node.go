@@ -434,11 +434,8 @@ func (dhtNode *DHTNode) findSuccesor(key string) { //pred of inserting node.
 	}
 }
 
-<<<<<<< HEAD
 func (dhtNode *DHTNode) fingerForward1(msg *Msg) {
-=======
-/*func (dhtNode *DHTNode) fingerForward(msg *Msg) {
->>>>>>> origin/master
+
 	//fmt.Println(dhtNode.nodeId)
 	src := dhtNode.contact.ip + ":" + dhtNode.contact.port
 	if dhtNode.responsible(msg.Key) {
@@ -570,6 +567,7 @@ func (dhtNode *DHTNode) fingerTimer() {
 		fmt.Print("node[2]: ")
 		fmt.Println(nodes[2])*/
 		dhtNode.fingers = &FingerTable{nodes}
+
 	}
 
 	for {
