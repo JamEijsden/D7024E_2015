@@ -92,15 +92,16 @@ func calcFinger(n []byte, k int, m int) (string, []byte) {
 	return resultHex, resultBytes
 }
 
-func generateNodeId() string {
-	u, err := uuid.NewV4()
+func generateNodeId(nodeIP string) string {
+	_, err := uuid.NewV4()
+	//u.String()
 	if err != nil {
 		panic(err)
 	}
 
 	// calculate sha-1 hash
 	hasher := sha1.New()
-	hasher.Write([]byte(u.String()))
+	hasher.Write([]byte(nodeIP))
 
 	return fmt.Sprintf("%x", hasher.Sum(nil))
 }

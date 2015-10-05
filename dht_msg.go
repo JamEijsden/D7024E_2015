@@ -17,6 +17,7 @@ type Msg struct {
 
 	Origin string `json:"origin"`
 
+	Data []byte `json:"data"`
 	//Node *DHTNode `json:"node"`
 }
 
@@ -32,17 +33,9 @@ func createMsg(t, k, s, d, o string) *Msg {
 	return msg
 }
 
-func createData(k, s, d string) *Msg {
-	msg := createMsg("reply", k, s, d, s)
-	return msg
-}
-
-func createJoinMsg(k, s, d string) *Msg {
-	msg := createMsg("join", k, s, d, s)
-	return msg
-}
-
-func createInitMsg(k, s, d string) *Msg {
-	msg := createMsg("init", k, s, d, s)
+func createDataMsg(t, k, s, d, o string, data []byte) *Msg {
+	msg := createMsg(t, k, s, d, o)
+	msg.Data = data
+	msg.Timestamp = time.Now().UnixNano()
 	return msg
 }

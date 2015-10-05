@@ -56,7 +56,7 @@ func makeDHTNode(nodeId *string, ip string, port string) *DHTNode {
 	dhtNode.succChan = make(chan *Finger)
 	dhtNode.initiated = 0
 	if nodeId == nil {
-		genNodeId := generateNodeId()
+		genNodeId := generateNodeId(bindAdr)
 		dhtNode.nodeId = genNodeId
 	} else {
 		dhtNode.nodeId = *nodeId
@@ -226,7 +226,7 @@ func (dhtNode *DHTNode) startFindSucc(msg *Msg) {
 		for {
 			select {
 			case s := <-dhtNode.succChan:
-				fmt.Println(s)
+				//fmt.Println(s)
 				m = createMsg("foundSucc", s.hash, sender, msg.Origin, s.address)
 				dhtNode.transport.send(m)
 				return
@@ -245,7 +245,7 @@ func (dhtNode *DHTNode) findSuccessorjoin(msg *Msg) {
 		result = between([]byte(dhtNode.nodeId), []byte(dhtNode.succ[0]), []byte(msg.Key))
 
 	} else if dhtNode.succ[0] == dhtNode.nodeId {
-		//fmt.Println(dhtNode.nodeId + "> SELFPOINTER")
+
 		result = true
 	}
 	//go dhtNode.transport.send(createMsg("findSucc", dhtNode.succ[0], dhtNode, dhtNode.succ[1], msg.Origin))
@@ -272,6 +272,21 @@ func (dhtNode *DHTNode) findSuccessorjoin(msg *Msg) {
 		go dhtNode.QueueTask(createTask("init", msg))
 
 		//KLAR
+
+
+
+	}if msg.Type == "done" {
+
+
+		fmt.Println(dhtNode.succ[0] + "<- succ :" + dhtNode.nodeId + ": pred -> " + dhtNode.pred[0] + "\n")
+	} else {
+
+		msg.Type = "join"
+		go dhtNode.QueueTask(createTask("join", msg))
+		//}
+	}
+
+
 	//dhtNode.fingers = findFingers(dhtNode)
 } */
 
@@ -515,11 +530,13 @@ func (dhtNode *DHTNode) taskHandler() {
 func (dhtNode *DHTNode) stabilizeTimer() {
 	//src := dhtNode.contact.ip + ":" + dhtNode.contact.port
 	for {
-		if dhtNode.online != 0 {
 
-			time.Sleep(time.Millisecond * 1000)
-			//dhtNode.transport.send(createMsg("notify", dhtNode.nodeId, src, dhtNode.succ[1], src))
-			go dhtNode.QueueTask(createTask("stabilize", nil))
+		if dhtNode.online != 1 {
+			return
+		}
+		time.Sleep(time.Millisecond * 1000)
+		//dhtNode.transport.send(createMsg("notify", dhtNode.nodeId, src, dhtNode.succ[1], src))
+		go dhtNode.QueueTask(createTask("stabilize", nil))
 
 		}
 		//dhtNode.QueueTask(createTask("print", createMsg("", "", "1", "", "")))
@@ -546,6 +563,7 @@ func (dhtNode *DHTNode) fingerTimer() {
 	}
 	//for {
 	if dhtNode.online != 0 {
+
 
 		time.Sleep(time.Second * 3)
 		go dhtNode.QueueTask(createTask("fixFingers", nil))

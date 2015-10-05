@@ -86,6 +86,9 @@ func (transport *Transport) processMsg() {
 						go func() {
 							transport.node.heartbeat <- m.Key
 						}()
+
+					case "data":
+						go replicate(transport.node, m)
 					}
 				}
 			}
@@ -116,6 +119,7 @@ func (transport *Transport) listen() {
 			//return
 			//	we	got	a	message, do something
 		}
+
 	}
 }
 
@@ -135,6 +139,7 @@ func (transport *Transport) send(msg *Msg) {
 	}
 	//fmt.Println(msg)
 	bytes, err := json.Marshal(msg)
+
 	defer conn.Close()
 	_, err = conn.Write(bytes)
 	if err != nil {
