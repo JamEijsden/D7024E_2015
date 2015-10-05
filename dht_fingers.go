@@ -6,7 +6,7 @@ import (
 	//"sync"
 )
 
-const BITS int = 160
+const BITS int = 3
 
 type FingerTable struct {
 	fingerList [BITS]*Finger
