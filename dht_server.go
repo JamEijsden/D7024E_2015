@@ -49,13 +49,16 @@ func (transport *Transport) processMsg() {
 					case "lookup":
 						//go transport.node.QueueTask(createTask("lookup", m))
 						go transport.node.lookupForward(m)
+					//case "lookup_finger_again":
+					//	go transport.node.findSuccesor(m.Key)
+					case "lookup_finger":
+						go transport.node.fingerForward1(m)
 					case "lookup_found":
+						//fmt.Print("found this: ")
+						//fmt.Println(&Finger{m.Key, m.Src})
 						//fmt.Println(transport.node.nodeId + "YO YO FOUND YO")
 						go transport.node.found(&Finger{m.Key, m.Src})
 						//fmt.Println(&Finger{m.Key, m.Src})
-					case "lookup_finger":
-						//go transport.node.QueueTask(createMsg("fingerLookup", m))
-						go transport.node.fingerForward(m)
 					case "notify":
 						go transport.node.QueueTask(createTask("notify", m))
 					case "stabilize":
