@@ -38,9 +38,9 @@ type File struct {
 }
 
 type Data struct {
-	filename  string
-	content   string
-	from_node string
+	Filename  string `json="filename"`
+	Content   string `json="content"`
+	From_node string `json="from_node"`
 }
 
 func (dc *DataController) ListData(w http.ResponseWriter, r *http.Request, _ httprouter.Params) {
@@ -50,7 +50,7 @@ func (dc *DataController) ListData(w http.ResponseWriter, r *http.Request, _ htt
 	dc.site = scripts + "<h1 style='text-align:center;'>Welcome to Skynet!</h1>"
 	dc.site = dc.site + getFileInfo(dc)
 
-	dc.site = dc.site + "</div><div id='korv' style='text-align:center;min-height:25%;float:bottom;'><h2>Upload file</h2><input type='file' id='fileInput'/><button onclick='startUpload();'>Upload</button></br><progress id='progressBar' max='100' value='0'/></div>"
+	dc.site = dc.site + "</div><div id='korv' style='text-align:center;min-width:100%;min-height:25%;position: absolute;bottom: 0;'><h2>Upload file</h2><input type='file' id='fileInput'/><button onclick='startUpload();'>Upload</button></br><progress id='progressBar' max='100' value='0'/></div>"
 	t, _ = t.Parse(dc.site) //parse some content and generate a template, which is an internal representation
 
 	p := dc //define an instance with required field
@@ -58,14 +58,14 @@ func (dc *DataController) ListData(w http.ResponseWriter, r *http.Request, _ htt
 }
 
 func getFileInfo(dc *DataController) string {
-	waitRespons := time.NewTimer(time.Millisecond * 500)
+	waitRespons := time.NewTimer(time.Millisecond * 10000)
 	site := ""
 	src := dc.Node.contact.ip + ":" + dc.Node.contact.port
 	dc.Node.gatherAllData(createMsg("allData", "", "", "", src))
 	for {
 		select {
 		case d := <-dc.Node.dataChannel:
-			site = site + "<div style='text-align:center;float:center;margin:auto 0;min-height:25%;'><h2>Files stored</h2><p>" + dc.Temp_Data + "</p>"
+			site = site + "<div style='text-align:center;float:left;margin:auto 0;min-width:50%;min-height:25%;'><h2>Files stored</h2><p>" + dc.Temp_Data + "</p>"
 			strList := strings.Split(d, ",")
 			var div string
 			if d != "" {
@@ -77,16 +77,17 @@ func getFileInfo(dc *DataController) string {
 					}
 				}
 			} else {
+
 				site = site + "No stored data found in Skynet <br>"
 			}
-			site = site + "</div>"
+			site = site + "</div><div style='text-align:center;float:right;max-width:50%;min-width:50%;margin:auto 0;min-height:25%;'><h2>File Content</h2><p id='data_content'></p></div>"
 			return site
 			//merge template ‘t’ with content of ‘p’
 
 		case r := <-waitRespons.C:
 			r = r
 			fmt.Println("REQUEST TIMED OUT")
-			return ""
+			return site
 		}
 	}
 }
@@ -96,19 +97,20 @@ func (dc *DataController) GetData(w http.ResponseWriter, r *http.Request, p http
 	// Populate the user data
 	content, from_node := dc.Node.getData(p.ByName("key"))
 	filename := p.ByName("key")
-	u := Data{filename, content, from_node}
-	fmt.Fprintln(w, u.content)
+	data := Data{}
+	data.Content = content
+	data.Filename = filename
+	data.From_node = from_node
+	fmt.Println(data)
+	//fmt.Fprintln(w, u.content)
 	// Marshal provided interface into JSON structure
-	uj, e := json.Marshal(u)
+	uj, e := json.Marshal(data)
 	check(e)
 
-	var data Data
-	json.Unmarshal(uj, &data)
-
 	w.Header().Set("Content-Type", "application/json")
-	w.WriteHeader(201)
+	w.WriteHeader(200)
 	//fmt.Fprintln(w, &data)
-	//fmt.Fprintf(w, "%s", data)
+	fmt.Fprintf(w, "%s", uj)
 }
 func (dc DataController) uploadData(w http.ResponseWriter, r *http.Request, p httprouter.Params) {
 	file := File{}
@@ -176,7 +178,7 @@ func WebServer(dhtNode *DHTNode) {
 func createFileDiv(filename string, node *DHTNode) string {
 	str := "<div style='margin:0 auto;text-align:center;'>" + filename
 	adr := node.contact.ip + ":" + node.contact.port
-	str = str + "<br><a href='http://" + adr + "/storage/" + filename + "' id='fileName' onclick='getData(this.id);> open</a>     "
+	str = str + "<br><a href=# id='" + filename + "' onclick='getData(this.id)';> open</a>     "
 	str = str + "<a id='a.delete' href='http://" + adr + "/storag/" + filename + "'> remove</a><br>"
 	str = str + "</div>"
 	//fmt.Println(str)

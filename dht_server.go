@@ -122,7 +122,9 @@ func (transport *Transport) processMsg() {
 func (transport *Transport) listen() {
 	udpAddr, err := net.ResolveUDPAddr("udp", transport.bindAddress) //adds adress to variable udpAddr and err msg in var err is there is one.
 
-	transport.conn, err = net.ListenUDP("udp", udpAddr) //we listen to the IP-adress in udpAddr.
+	transport.conn, err = net.ListenUDP("udp", udpAddr)
+	transport.conn.SetReadBuffer(10000)
+	transport.conn.SetWriteBuffer(10000) //we listen to the IP-adress in udpAddr.
 	//fmt.Println("Server running on " + transport.bindAddress + " with ID " + transport.node.nodeId + "\nWaiting for messages..")
 
 	if err != nil {
@@ -159,6 +161,8 @@ func (transport *Transport) send(msg *Msg) {
 		fmt.Println(err.Error())
 	}
 	conn, err := net.DialUDP("udp", nil, udpAddr)
+	conn.SetWriteBuffer(10000)
+	conn.SetReadBuffer(10000)
 	if err != nil {
 		fmt.Println(err.Error())
 	}
