@@ -128,7 +128,7 @@ func (dhtNode *DHTNode) printFingers() {
 
 func (dhtNode *DHTNode) gatherAllData(msg *Msg) {
 	sender := dhtNode.contact.ip + ":" + dhtNode.contact.port
-	if msg.Key != "" && msg.Origin == sender {
+	if msg.Origin == sender && msg.Src != "" {
 		go func() {
 			fmt.Println("Im sending data to myself")
 			dhtNode.dataChannel <- msg.Key

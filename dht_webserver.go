@@ -60,7 +60,7 @@ func getFileInfo(dc *DataController) string {
 	waitRespons := time.NewTimer(time.Millisecond * 500)
 	site := ""
 	src := dc.Node.contact.ip + ":" + dc.Node.contact.port
-	dc.Node.gatherAllData(createMsg("allData", "", src, "", src))
+	dc.Node.gatherAllData(createMsg("allData", "", "", "", src))
 	for {
 		select {
 		case d := <-dc.Node.dataChannel:
