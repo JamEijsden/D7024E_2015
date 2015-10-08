@@ -86,7 +86,6 @@ func TestNetwork(t *testing.T) {
 	node2.joinRequest(node0)
 
 	node3.joinRequest(node0)
-	//printFingers(node0)
 
 	node4.joinRequest(node0)
 
@@ -96,9 +95,7 @@ func TestNetwork(t *testing.T) {
 
 	node7.joinRequest(node0)
 
-	//time.Sleep(time.Second * 2)
-	//printFingers(node0)
-	//go node4.nodeFail()
+	time.Sleep(time.Second * 8)
 
 	//node4.joinRequest(node0)
 	time.Sleep(time.Second * 7)
@@ -108,6 +105,7 @@ func TestNetwork(t *testing.T) {
 
 	//node0.queueDataUpload("test.txt")
 	//node4.queueDataUpload("wooot.txt")
+
 	//fmt.Println(hashString("wooot.txt"))
 	//node0.findSuccesor(hashString("wooot.txt"))
 

@@ -47,19 +47,23 @@ func (transport *Transport) processMsg() {
 						go transport.node.successorFound(&Finger{m.Key, m.Origin})
 						//transport.node.QueueTask(createTask("reconn", m))
 					case "lookup":
-						//go transport.node.QueueTask(createTask("lookup", m))
+						go transport.send(createMsg("ack", "", m.Src, m.Src, m.Src))
 						go transport.node.lookupForward(m)
+						//go transport.node.QueueTask(createTask("lookup", m))
 					//case "lookup_finger_again":
 					//	go transport.node.findSuccesor(m.Key)
 					case "lookup_finger":
+						go transport.send(createMsg("response", "", m.Src, m.Src, m.Src))
 						go transport.node.fingerForward1(m)
 					case "lookup_found":
-						//fmt.Print("found this: ")
-						//fmt.Println(&Finger{m.Key, m.Src})
-						//fmt.Println(transport.node.nodeId + "YO YO FOUND YO")
-						go transport.node.found(&Finger{m.Key, m.Src})
-						//fmt.Println(&Finger{m.Key, m.Src})
+						go transport.send(createMsg("ack", "", m.Src, m.Src, m.Src))
+						if m.Key == m.Origin {
+							go transport.node.found(&Finger{m.Key, m.Src}) //fmt.Println(&Finger{m.Key, m.Src})
+						} else {
+							go transport.node.found(&Finger{m.Key, m.Src})
+						}
 					case "notify":
+						//fmt.Println("Stabi notify -> notify server")
 						go transport.node.QueueTask(createTask("notify", m))
 					case "stabilize":
 						go transport.node.QueueTask(createTask("stabilize", m))
@@ -68,6 +72,12 @@ func (transport *Transport) processMsg() {
 						go transport.node.QueueTask(createTask("print", m))
 					case "leave":
 						go transport.node.QueueTask(createTask("leave", m))
+
+					//TESTAR EN SAK
+					case "ack":
+						go func() {
+							transport.node.ackMsg <- m
+						}()
 					case "response":
 						//go transport.node.QueueTask(createTask("stabilize", m))
 						go func() {
@@ -102,6 +112,8 @@ func (transport *Transport) processMsg() {
 						}()
 					}
 				}
+			} else {
+				return
 			}
 		}
 	}()
@@ -119,23 +131,25 @@ func (transport *Transport) listen() {
 	defer transport.conn.Close()
 	dec := json.NewDecoder(transport.conn) //decodes conn and adds to variable dec
 	for {
-		if transport.node.online == 1 {
-			msg := Msg{}
-			err = dec.Decode(&msg) //decodes the message where the message adress is and adds an error msg if there's none.
-			//fmt.Println(transport.bindAddress + "> Received Message from " + msg.Src)
-			//fmt.Println(msg)
-			go func() {
-				transport.queue <- &msg
-			}()
-			//return
-			//	we	got	a	message, do something
+		if transport.node.online == 0 {
+			return
 		}
+		msg := Msg{}
+		err = dec.Decode(&msg) //decodes the message where the message adress is and adds an error msg if there's none.
+		//fmt.Println(transport.bindAddress + "> Received Message from " + msg.Src)
+		//fmt.Println(msg)
+		go func() {
+			transport.queue <- &msg
+		}()
+		//return
+		//	we	got	a	message, do something
 
 	}
 }
 
 func (transport *Transport) killConnection() {
 	transport.conn.Close()
+	return
 }
 
 func (transport *Transport) send(msg *Msg) {
