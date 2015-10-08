@@ -22,13 +22,14 @@ function startUpload() {
 		  console.log(data);
            xhr.onload = function() {
 				if (xhr.status == 200) {
-					alert("Sucess! Upload completed");
+					location.reload();
+					alert("Success! Upload completed");
 				} else {
 					alert("Error! Upload failed");
 				}
 			};
 			xhr.onerror = function() {
-				alert("Error! Upload failed. Can not connect to server.");
+				alert("Error! Upload failed. Cannot connect to server.");
 			};
     
 			progressBar.value = 0;
@@ -43,4 +44,5 @@ function startUpload() {
 	}
 }
 </script>
+
 	

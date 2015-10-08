@@ -47,7 +47,7 @@ func (dc *DataController) ListData(w http.ResponseWriter, r *http.Request, _ htt
 	t := template.New("Skynet")
 	scripts := "<head>" + jsFunc() + "</head>"
 	// Simply write some test data for now
-	dc.site = scripts + "<h1 style='text-align:center;'>Welcome to Skynet, node {{.NodeId}}!</h1>"
+	dc.site = scripts + "<h1 style='text-align:center;'>Welcome to Skynet!</h1>"
 	dc.site = dc.site + getFileInfo(dc)
 
 	dc.site = dc.site + "</div><div id='korv' style='text-align:center;min-height:25%;float:bottom;'><h2>Upload file</h2><input type='file' id='fileInput'/><button onclick='startUpload();'>Upload</button></br><progress id='progressBar' max='100' value='0'/></div>"
@@ -68,12 +68,16 @@ func getFileInfo(dc *DataController) string {
 			site = site + "<div style='text-align:center;float:center;margin:auto 0;min-height:25%;'><h2>Files stored</h2><p>" + dc.Temp_Data + "</p>"
 			strList := strings.Split(d, ",")
 			var div string
-			for _, f := range strList {
-				if f != "" {
-					div = createFileDiv(f, dc.Node)
-					//fmt.Fprintln(w, div)
-					site = site + div + "<br>"
+			if d != "" {
+				for _, f := range strList {
+					if f != "" {
+						div = createFileDiv(f, dc.Node)
+						//fmt.Fprintln(w, div)
+						site = site + div + "<br>"
+					}
 				}
+			} else {
+				site = site + "No stored data found in Skynet <br>"
 			}
 			site = site + "</div>"
 			return site
@@ -172,7 +176,7 @@ func WebServer(dhtNode *DHTNode) {
 func createFileDiv(filename string, node *DHTNode) string {
 	str := "<div style='margin:0 auto;text-align:center;'>" + filename
 	adr := node.contact.ip + ":" + node.contact.port
-	str = str + "<br><a href='http://" + adr + "/storage/" + filename + "'> open</a>     "
+	str = str + "<br><a href='http://" + adr + "/storage/" + filename + "' id='fileName' onclick='getData(this.id);> open</a>     "
 	str = str + "<a id='a.delete' href='http://" + adr + "/storag/" + filename + "'> remove</a><br>"
 	str = str + "</div>"
 	//fmt.Println(str)
