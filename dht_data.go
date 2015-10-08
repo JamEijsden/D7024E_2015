@@ -68,8 +68,8 @@ func loadData(path string) ([]byte, string) {
 func fileDecode(dhtNode *DHTNode, data []byte, path string) {
 	a := strings.Split(string(data), ",")
 	reader, err := base64.StdEncoding.DecodeString(a[1])
-	fmt.Println(a)
-	fmt.Println("> Decoding")
+	//fmt.Println(a)
+	//fmt.Println("> Decoding")
 	//fmt.Println(string(reader))
 	if err != nil {
 		fmt.Println(err.Error())
@@ -84,14 +84,14 @@ func fileDecode(dhtNode *DHTNode, data []byte, path string) {
 	//save the imgByte to file
 	_, err = os.Create(path)
 	if err != nil {
-		fmt.Println("CREATION")
+		//fmt.Println("CREATION")
 		fmt.Println(err)
 		os.Exit(1)
 	}
 	fm = 0777
 	err = ioutil.WriteFile(path, reader, fm)
 	if err != nil {
-		fmt.Println("WRITING")
+		//fmt.Println("WRITING")
 		fmt.Println(err)
 		os.Exit(1)
 	}
@@ -146,7 +146,7 @@ func replicate(dhtNode *DHTNode, msg *Msg) {
 			return
 			// it's a directory
 		}
-		//go fileDecode(dhtNode, msg.Data, (path + "/" + msg.Key))
+		go fileDecode(dhtNode, msg.Data, (path + "/" + msg.Key))
 
 	}
 }

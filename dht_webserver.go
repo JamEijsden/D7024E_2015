@@ -113,7 +113,7 @@ func (dc DataController) uploadData(w http.ResponseWriter, r *http.Request, p ht
 		fmt.Println(err.Error())
 	}
 	fmt.Println(file)
-	dc.Node.storeData(file.Name, "dataString")
+	dc.Node.storeData(file.Name, file.File)
 	/*body, err := ioutil.ReadAll(r.Body)
 	if err != nil {
 		panic()
