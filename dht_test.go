@@ -95,13 +95,13 @@ func TestNetwork(t *testing.T) {
 
 	node7.joinRequest(node0)
 
-	time.Sleep(time.Second * 8)
+	time.Sleep(time.Second * 10)
 
 	//node4.joinRequest(node0)
-	time.Sleep(time.Second * 7)
+	//time.Sleep(time.Second * 7)
 	//node0.QueueTask(createTask("print", createMsg("", "", "1", "", "")))
 
-	time.Sleep(time.Second * 5)
+	//time.Sleep(time.Second * 5)
 
 	//node0.queueDataUpload("test.txt")
 	//node4.queueDataUpload("wooot.txt")
@@ -110,11 +110,11 @@ func TestNetwork(t *testing.T) {
 	//node0.findSuccesor(hashString("wooot.txt"))
 
 	//sendData(node5)
+	//node0.storeData("roflcopter.txt", "data:text/plain;base64,ICAgUk9GTDpST0ZMOlJPRkw6Uk9GTA0KICAgICAgICAgIF9fXyBeX19fX18NCiBMICAgIF9fXy8gICAgICAgICBbIF0NCkxPTD09PV8NCiBMICAgICBcX19fX19fX19fX19fX10NCiAgICAgICAgIF9fX0lfX19fX19JX18=")
 
 	time.Sleep(time.Second * 500)
 
 }
-
 func (dhtNode *DHTNode) heartbeatRespons(msg *Msg) {
 	src := dhtNode.contact.ip + ":" + dhtNode.contact.port
 	dhtNode.transport.send(createMsg("heartbeat_respons", dhtNode.nodeId, src, msg.Src, msg.Origin))

@@ -466,7 +466,7 @@ func (dhtNode *DHTNode) taskHandler() {
 				case "fixFingers":
 					fixFingers(dhtNode)
 				case "data":
-					dhtNode.storeData(t.M.Key)
+					dhtNode.storeData(t.M.Key, "dataString")
 					//time.Sleep(time.Millisecond * 500)
 				case "notify":
 					dhtNode.notify(t.M)
