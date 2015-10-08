@@ -92,6 +92,14 @@ func (transport *Transport) processMsg() {
 
 					case "data":
 						go replicate(transport.node, m)
+					case "allData":
+						go transport.node.gatherAllData(m)
+					case "request_data":
+						go transport.node.ansDataRequest(m)
+					case "data_reply":
+						go func() {
+							transport.node.dataChannel <- string(m.Data)
+						}()
 					}
 				}
 			}

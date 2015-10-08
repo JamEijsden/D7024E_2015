@@ -30,6 +30,7 @@ type DHTNode struct {
 	taskQueue   chan *Task
 	heartbeat   chan string
 	succChan    chan *Finger
+	dataChannel chan string
 	initiated   int
 }
 
@@ -54,6 +55,7 @@ func makeDHTNode(nodeId *string, ip string, port string) *DHTNode {
 	dhtNode.sm = make(chan *Finger)
 	dhtNode.taskQueue = make(chan *Task)
 	dhtNode.heartbeat = make(chan string)
+	dhtNode.dataChannel = make(chan string)
 	dhtNode.responseMsg = make(chan *Msg)
 	dhtNode.succChan = make(chan *Finger)
 	dhtNode.initiated = 0
@@ -69,6 +71,7 @@ func makeDHTNode(nodeId *string, ip string, port string) *DHTNode {
 	dhtNode.fingers = new(FingerTable)
 	dhtNode.fingers.fingerList = [BITS]*Finger{}
 	dhtNode.transport = CreateTransport(dhtNode, bindAdr)
+	go WebServer(dhtNode)
 	go initStorage(dhtNode)
 	go dhtNode.transport.processMsg()
 	go dhtNode.taskHandler()
@@ -114,29 +117,63 @@ func (dhtNode *DHTNode) printFingers() {
 	for _, f := range dhtNode.fingers.fingerList {
 		fmt.Print(f)
 		fmt.Print(" \n")
-
 	}
+}
+
+func (dhtNode *DHTNode) gatherAllData(msg *Msg) {
+	sender := dhtNode.contact.ip + ":" + dhtNode.contact.port
+	if msg.Key != "" && msg.Origin == sender {
+		go func() {
+			fmt.Println("Im sending data to myself")
+			dhtNode.dataChannel <- msg.Key
+		}()
+	} else {
+
+		msg.Key = msg.Key + getAllData(dhtNode)
+		fmt.Println(dhtNode.nodeId + " Im sending my data")
+		go dhtNode.transport.send(createMsg("allData", msg.Key, sender, dhtNode.succ[1], msg.Origin))
+	}
+
 }
 
 /* Adds dataUpload to Task Queue */
-func (dhtNode *DHTNode) queueDataUpload() {
-	go dhtNode.QueueTask(createTask("data", nil))
+func (dhtNode *DHTNode) queueDataUpload(path string) {
+	go dhtNode.QueueTask(createTask("data", createMsg("", path, "", "", "")))
 }
 
 /* Looks for responsible node for the data and tells it to store it. */
-func (dhtNode *DHTNode) storeData() {
-	data_byte, name := loadData()
+func (dhtNode *DHTNode) storeData(name, data_string string) {
+	src := dhtNode.contact.ip + ":" + dhtNode.contact.port
+
+	//data_byte, name := loadData(path)
 	hash := hashString(name)
-	dhtNode.fingerLookup(name)
+
+	resp := dhtNode.findSuccesor(hash)
+	m := createDataMsg("data", name, src, resp.address, src, []byte(data_string))
+	fmt.Println(m)
+	go dhtNode.transport.send(m)
+
+}
+
+func (dhtNode *DHTNode) getData(filename string) (string, string) {
+	src := dhtNode.contact.ip + ":" + dhtNode.contact.port
+	hash := hashString(filename)
+	resp := dhtNode.findSuccesor(hash)
+	fmt.Println(resp)
+	dhtNode.transport.send(createMsg("request_data", filename, src, resp.address, src))
 	for {
 		select {
-		case r := <-dhtNode.sm:
-			src := dhtNode.contact.ip + ":" + dhtNode.contact.port
-			m := createDataMsg("data", hash, src, r.address, src, data_byte)
-			go dhtNode.transport.send(m)
+		case d := <-dhtNode.dataChannel:
+			//fmt.Println(d)
+			return d, resp.hash
 		}
 	}
+}
 
+func (dhtNode *DHTNode) ansDataRequest(msg *Msg) {
+	src := dhtNode.contact.ip + ":" + dhtNode.contact.port
+	byte, name := loadData("node_storage/" + dhtNode.nodeId + "/" + msg.Key)
+	go dhtNode.transport.send(createDataMsg("data_reply", name, src, msg.Origin, src, byte))
 }
 
 /* Checks if Msg.src is dhtNodes predecessor */
@@ -324,7 +361,6 @@ func (dhtNode *DHTNode) responsible(key string) bool {
 	return isResponsible
 }
 
-
 func (dhtNode *DHTNode) fingerLookup(key string) {
 	fmt.Println("Looking up finger: ")
 	src := dhtNode.contact.ip + ":" + dhtNode.contact.port
@@ -377,7 +413,8 @@ func (dhtNode *DHTNode) fingerForward(msg *Msg) {
 			}
 		}
 	}
-}*/
+}
+
 func (dhtNode *DHTNode) startLookup(key string) {
 	dhtNode.QueueTask(createTask("fingerLookup", createMsg("", key, "", "", "")))
 }
@@ -386,15 +423,15 @@ func (dhtNode *DHTNode) findSuccesor(key string) *Finger { //pred of inserting n
 	src := dhtNode.contact.ip + ":" + dhtNode.contact.port
 
 	if between([]byte(dhtNode.nodeId), []byte(dhtNode.succ[0]), []byte(key)) {
-		fmt.Println(&Finger{dhtNode.succ[0], src})
-		return (&Finger{dhtNode.succ[0], src})
+		//fmt.Println(&Finger{dhtNode.succ[0], src})
+		return (&Finger{dhtNode.succ[0], dhtNode.succ[1]})
 	} else {
-		fmt.Println("sending succ to fingerForward")
+		//fmt.Println("sending succ to fingerForward")
 		go dhtNode.transport.send(createMsg("lookup_finger", key, src, src, src))
 		for {
 			select {
 			case s := <-dhtNode.succChan:
-				fmt.Println(s.hash)
+				fmt.Println("Responisble: " + s.hash + " - " + s.address)
 				return s
 			}
 		}
@@ -403,10 +440,10 @@ func (dhtNode *DHTNode) findSuccesor(key string) *Finger { //pred of inserting n
 
 func (dhtNode *DHTNode) fingerForward1(msg *Msg) {
 	src := dhtNode.contact.ip + ":" + dhtNode.contact.port
-	fmt.Println(dhtNode.nodeId + "> " + dhtNode.nodeId + " <-> " + dhtNode.succ[0] + " =? " + msg.Key)
+	//fmt.Println(dhtNode.nodeId + "> " + dhtNode.nodeId + " <-> " + dhtNode.succ[0] + " =? " + msg.Key)
 
 	if between([]byte(dhtNode.nodeId), []byte(dhtNode.succ[0]), []byte(msg.Key)) {
-		dhtNode.transport.send(createMsg("foundSucc", dhtNode.succ[0], src, msg.Origin, msg.Src))
+		dhtNode.transport.send(createMsg("foundSucc", dhtNode.succ[0], src, msg.Origin, dhtNode.succ[1]))
 		return
 		//dhtNode.found(&Finger{dhtNode.succ[0], msg.Src})
 		//dhtNode.transport.send(createMsg("lookup_found_again", msg.Key, src, msg.Origin, src))
@@ -414,14 +451,14 @@ func (dhtNode *DHTNode) fingerForward1(msg *Msg) {
 		length := len(dhtNode.fingers.fingerList) - 1
 		temp := length
 		for temp >= 0 {
-			fmt.Println(dhtNode.nodeId + "> " + dhtNode.nodeId + " <-> " + msg.Key + " =? " + dhtNode.fingers.fingerList[temp].hash)
+			//		fmt.Println(dhtNode.nodeId + "> " + dhtNode.nodeId + " <-> " + msg.Key + " =? " + dhtNode.fingers.fingerList[temp].hash)
 			if between([]byte(dhtNode.nodeId), []byte(msg.Key), []byte(dhtNode.fingers.fingerList[temp].hash)) || dhtNode.fingers.fingerList[temp].hash == msg.Key {
 				//fmt.Print(between([]byte(dhtNode.nodeId), []byte(msg.Key), []byte(dhtNode.fingers.fingerList[temp].hash)))
-				fmt.Println("YES")
+				//			fmt.Println("YES")
 				dhtNode.transport.send(createMsg("lookup_finger", msg.Key, src, dhtNode.fingers.fingerList[temp].address, msg.Origin))
 				return
 			} else {
-				fmt.Println("temp - 1 ")
+				//			fmt.Println("temp - 1 ")
 				temp = temp - 1
 				//dhtNode.transport.send(createMsg("lookup_finger", msg.Key, src, dhtNode.fingers.fingerList[temp].address, msg.Origin))
 			}
@@ -476,7 +513,7 @@ func (dhtNode *DHTNode) taskHandler() {
 				case "fixFingers":
 					fixFingers(dhtNode)
 				case "data":
-					dhtNode.storeData()
+					dhtNode.storeData(t.M.Key)
 					//time.Sleep(time.Millisecond * 500)
 				case "notify":
 					//dhtNode.stabilize()

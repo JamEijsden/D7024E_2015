@@ -40,9 +40,9 @@ func createDataFolder(path string) {
 
 }
 
-func loadData() ([]byte, string) {
+func loadData(path string) ([]byte, string) {
 	fmt.Println("encoding")
-	file, err := os.Open("wooot.txt") // a QR code image
+	file, err := os.Open(path) // a QR code image
 
 	if err != nil {
 		fmt.Println(err)
@@ -68,6 +68,7 @@ func fileDecode(dhtNode *DHTNode, data []byte, path string) {
 	fmt.Print(dhtNode.nodeId)
 	fmt.Println("> Decoding")
 	var fm os.FileMode
+
 	//imgBase64Str := base64.StdEncoding.EncodeToString(data)
 	// convert []byte to image for saving to file
 	//file, _, _ := image.Decode(bytes.NewReader(data))
@@ -97,6 +98,20 @@ func fileDecode(dhtNode *DHTNode, data []byte, path string) {
 
 }
 */
+
+func getAllData(dhtNode *DHTNode) string {
+	files, _ := ioutil.ReadDir("node_storage/" + dhtNode.nodeId + "/")
+	allFiles := ""
+	for _, f := range files {
+		if f.IsDir() == false {
+
+			fmt.Println(f.Name())
+			allFiles = allFiles + f.Name() + ","
+		}
+	}
+	return allFiles
+
+}
 func replicate(dhtNode *DHTNode, msg *Msg) {
 
 	if msg.Src != dhtNode.pred[1] || msg.Origin == dhtNode.pred[1] {
@@ -114,7 +129,7 @@ func replicate(dhtNode *DHTNode, msg *Msg) {
 			createDataFolder(path)
 
 		}
-		fmt.Println("I CRASHED HERE?")
+		fmt.Println(finfo)
 		if finfo.IsDir() {
 			fmt.Println(dhtNode.nodeId + "> Storage folder exists")
 			// it's a file
