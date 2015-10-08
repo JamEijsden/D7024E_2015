@@ -32,7 +32,7 @@ function startUpload() {
 			};
     
 			progressBar.value = 0;
-			xhr.open("POST", "http://localhost:1113/storage", true);
+			xhr.open('POST', 'http://{{.ADR}}/storage', true);
 			xhr.setRequestHeader("Content-Type", "application/json");
 			xhr.send(JSON.stringify(data));
 		};

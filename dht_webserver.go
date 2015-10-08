@@ -25,6 +25,7 @@ type handlerError struct {
 
 type DataController struct {
 	NodeId    string
+	ADR       string
 	Node      *DHTNode
 	Temp_Data string
 
@@ -49,7 +50,7 @@ func (dc *DataController) ListData(w http.ResponseWriter, r *http.Request, _ htt
 	dc.site = scripts + "<h1 style='text-align:center;'>Welcome to Skynet, node {{.NodeId}}!</h1>"
 	dc.site = dc.site + getFileInfo(dc)
 
-	dc.site = dc.site + "</div><div id='korv' style='text-align:center;min-width:50%;float:right;'><h2>File content</h2><p id='file'>{{.Temp_Data}}</p></div>"
+	dc.site = dc.site + "</div><div id='korv' style='text-align:center;min-height:25%;float:bottom;'><h2>Upload file</h2><input type='file' id='fileInput'/><button onclick='startUpload();'>Upload</button></br><progress id='progressBar' max='100' value='0'/></div>"
 	t, _ = t.Parse(dc.site) //parse some content and generate a template, which is an internal representation
 
 	p := dc //define an instance with required field
@@ -64,7 +65,7 @@ func getFileInfo(dc *DataController) string {
 	for {
 		select {
 		case d := <-dc.Node.dataChannel:
-			site = site + "<div style='text-align:center;float:left;margin:auto 0;min-width:50%;'><h2>Files stored</h2><p>" + dc.Temp_Data + "</p><input type='file' id='fileInput'/><button onclick='startUpload();'>Upload</button></br><progress id='progressBar' max='100' value='0'/></div>"
+			site = site + "<div style='text-align:center;float:center;margin:auto 0;min-height:25%;'><h2>Files stored</h2><p>" + dc.Temp_Data + "</p>"
 			strList := strings.Split(d, ",")
 			var div string
 			for _, f := range strList {
@@ -74,6 +75,7 @@ func getFileInfo(dc *DataController) string {
 					site = site + div + "<br>"
 				}
 			}
+			site = site + "</div>"
 			return site
 			//merge template ‘t’ with content of ‘p’
 
@@ -91,7 +93,7 @@ func (dc *DataController) GetData(w http.ResponseWriter, r *http.Request, p http
 	content, from_node := dc.Node.getData(p.ByName("key"))
 	filename := p.ByName("key")
 	u := Data{filename, content, from_node}
-	fmt.Fprintln(w, u)
+	fmt.Fprintln(w, u.content)
 	// Marshal provided interface into JSON structure
 	uj, e := json.Marshal(u)
 	check(e)
@@ -101,7 +103,7 @@ func (dc *DataController) GetData(w http.ResponseWriter, r *http.Request, p http
 
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(201)
-	fmt.Fprintln(w, &data)
+	//fmt.Fprintln(w, &data)
 	//fmt.Fprintf(w, "%s", data)
 }
 func (dc DataController) uploadData(w http.ResponseWriter, r *http.Request, p httprouter.Params) {
@@ -128,7 +130,7 @@ func (dc DataController) uploadData(w http.ResponseWriter, r *http.Request, p ht
 
 func WebServer(dhtNode *DHTNode) {
 	// Instantiate a new router
-	dc := DataController{dhtNode.nodeId, dhtNode, "", ""}
+	dc := DataController{dhtNode.nodeId, dhtNode.contact.ip + ":" + dhtNode.contact.port, dhtNode, "", ""}
 	r := httprouter.New()
 	r.GET("/", dc.ListData)
 	r.GET("/storage/:key", dc.GetData)
@@ -187,7 +189,7 @@ func jsFunc() string {
 	io.Copy(buf, f)                // Error handling elided for brevity.
 	f.Close()
 	s := string(buf.Bytes())
-	fmt.Println(s)
+	//fmt.Println(s)
 	return s
 }
 
