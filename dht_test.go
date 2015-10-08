@@ -95,7 +95,14 @@ func TestNetwork(t *testing.T) {
 
 	node7.joinRequest(node0)
 
-	time.Sleep(time.Second * 10)
+	/*time.Sleep(time.Second * 8)
+	node2.nodeFail()
+	time.Sleep(time.Second * 8)
+	wg.Add(1)
+	go node2.startServer(&wg)
+	wg.Wait()
+	time.Sleep(time.Second * 8)
+	node2.joinRequest(node0)*/
 
 	//node4.joinRequest(node0)
 	//time.Sleep(time.Second * 7)
