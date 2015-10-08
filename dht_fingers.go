@@ -3,6 +3,7 @@ package dht
 import (
 	"encoding/hex"
 	"fmt"
+	"time"
 	//"sync"
 )
 
@@ -18,7 +19,8 @@ type Finger struct {
 }
 
 func fixFingers(dhtNode *DHTNode) {
-	if dhtNode.fingers.fingerList[0] == nil {
+	if dhtNode.fingerSet == 0 {
+		dhtNode.fingerSet = 1
 		dhtNode.fingers = findFingers(dhtNode)
 	} else {
 		updateFingers(dhtNode)
@@ -63,35 +65,43 @@ func findFingers(dhtNode *DHTNode) *FingerTable {
 }
 
 func updateFingers(dhtNode *DHTNode) {
-
 	//var nodes [BITS]*Finger
-	var found int
 	src := dhtNode.contact.ip + ":" + dhtNode.contact.port
+	var found = 0
+	var waitRespons *time.Timer
 	for i := 0; i < BITS; i++ {
 
 		if dhtNode.fingers.fingerList[i] != nil {
+			//fmt.Println("1 if")
 
 			idBytes, _ := hex.DecodeString(dhtNode.nodeId)
 			fingerHex, _ := calcFinger(idBytes, (i + 1), BITS)
-
 			if i == 0 {
+				//dhtNode.transport.send(createMsg("lookup", fingerHex, src, dhtNode.fingers.fingerList[i].address, src))
 				go dhtNode.lookup(fingerHex)
+				//return
 			} else {
 				dhtNode.transport.send(createMsg("lookup", fingerHex, src, dhtNode.fingers.fingerList[i-1].address, src))
 			}
+			waitRespons = time.NewTimer(time.Millisecond * 1000)
 			for found != 1 {
 				select {
 				case s := <-dhtNode.sm:
-
-					found = 1
 					dhtNode.fingers.fingerList[i] = s
+					found = 1
+				case c := <-waitRespons.C:
+					c = c
+					//fmt.Print("(CALLED FROM FINGERS) waiting respons from: ")
+					//fmt.Println(dhtNode.fingers.fingerList[i-0].address)
+					found = 1
 				}
 			}
 			found = 0
 
 		}
-
 	}
+
+	// ???
 	/*go func() {
 		fmt.Print(dhtNode.nodeId)
 		for k := 0; k < BITS; k++ {
