@@ -222,13 +222,6 @@ func (dhtNode *DHTNode) join(adr string) {
 	sender := dhtNode.contact.ip + ":" + dhtNode.contact.port
 	dhtNode.pred[0] = ""
 	dhtNode.pred[1] = ""
-	fmt.Println(sender + " just joined.")
-	fmt.Println("===========================")
-	fmt.Println(dhtNode)
-	fmt.Println("===========================")
-	fmt.Println("fingers")
-	fmt.Println(dhtNode.fingers.fingerList[0])
-	fmt.Println("================")
 
 	dhtNode.transport.send(createMsg("findSucc", dhtNode.nodeId, sender, adr, sender))
 	for {
@@ -282,9 +275,6 @@ func (dhtNode *DHTNode) findSuccessorjoin(msg *Msg) {
 	}
 	if result {
 		go dhtNode.transport.send(createMsg("foundSucc", dhtNode.succ[0], sender, msg.Origin, dhtNode.succ[1]))
-		fmt.Println("found succ!!")
-		fmt.Println(msg.Key)
-		fmt.Println(msg.Src)
 		dhtNode.succ[0] = msg.Key
 		dhtNode.succ[1] = msg.Src
 	} else {
@@ -561,11 +551,6 @@ func (dhtNode *DHTNode) leaveRing() {
 ********************************************************************/
 
 func (dhtNode *DHTNode) nodeFail() {
-	dhtNode.online = 0
-	fmt.Println("==========================")
-	fmt.Println("killing node:" + dhtNode.nodeId)
-	fmt.Println("==========================")
-	fmt.Println("")
 	go dhtNode.transport.killConnection()
 	return
 }
