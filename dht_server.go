@@ -101,14 +101,14 @@ func (transport *Transport) processMsg() {
 							transport.node.heartbeat <- m.Key
 						}()
 
-					case "data":
+					case "data_save":
 						if m.Src != transport.node.pred[1] || m.Origin == transport.node.pred[1] {
 							go savedata(transport.node, m)
 						} else {
 							go replicate(transport.node, m)
 						}
-					case "data_save":
-						go replicate(transport.node, m)
+					//case "data_save":
+					//	go replicate(transport.node, m)
 					case "data_remove":
 						go deleteData(transport.node, m)
 					case "allData":

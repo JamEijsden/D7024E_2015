@@ -137,9 +137,8 @@ func replicate(dhtNode *DHTNode, msg *Msg) {
 		fmt.Println(dhtNode.nodeId + "> Creating storage folder")
 		createDataFolder(path)
 
-	}
-	fmt.Println(finfo)
-	if finfo.IsDir() {
+	} else if finfo.IsDir() {
+		fmt.Println(finfo)
 		fmt.Println(dhtNode.nodeId + "> Storage folder exists")
 		// it's a file
 	} else {
@@ -175,12 +174,16 @@ func updateData(dhtNode *DHTNode, msg *Msg) {
 		if hashString(f.Name()) < msg.Key && f.IsDir() == false {
 			b, _ := loadData(f.Name())
 			m := createDataMsg("data_save", f.Name(), msg.Dst, msg.Src, msg.Dst, b)
+			fmt.Print("saved data in: ")
+			fmt.Println(msg.Dst)
 			go dhtNode.transport.send(m)
 
 		}
 	}
 	for _, f := range files {
 		if f.IsDir() == true && f.Name() == dhtNode.pred[0] {
+			fmt.Print(dhtNode.pred[0])
+			fmt.Println(" > folder removed.")
 			os.Remove("./" + dhtNode.pred[0])
 		}
 	}

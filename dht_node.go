@@ -103,12 +103,12 @@ func (dhtNode *DHTNode) printRing(msg *Msg) {
 	src := dhtNode.contact.ip + ":" + dhtNode.contact.port
 	if msg.Type == "" {
 		fmt.Println(dhtNode)
-		dhtNode.printFingers()
+		//dhtNode.printFingers()
 		fmt.Print("\n")
 		dhtNode.transport.send(createMsg("print", "", src, dhtNode.succ[1], src))
 	} else if src != msg.Origin {
 		fmt.Println(dhtNode)
-		dhtNode.printFingers()
+		//dhtNode.printFingers()
 		fmt.Print("\n")
 
 		dhtNode.transport.send(createMsg("print", "", src, dhtNode.succ[1], msg.Origin))
@@ -238,7 +238,7 @@ func (dhtNode *DHTNode) join(adr string) {
 		case s := <-dhtNode.succChan:
 			dhtNode.succ[0] = s.hash
 			dhtNode.succ[1] = s.address
-			go dhtNode.transport.send(createMsg("update_data", s.hash, sender, dhtNode.succ[1], sender))
+			//go dhtNode.transport.send(createMsg("update_data", s.hash, sender, dhtNode.succ[1], sender))
 			var nodes [len(dhtNode.fingers.fingerList)]*Finger
 			if dhtNode.fingers.fingerList[0] == nil {
 				for i := 0; i < len(dhtNode.fingers.fingerList); i++ {
