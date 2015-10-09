@@ -31,8 +31,6 @@ func (transport *Transport) processMsg() {
 				select {
 				case m := <-transport.queue:
 					switch m.Type {
-					case "update_data":
-						go transport.node.QueueTask(createTask("update_data", m))
 					case "init":
 						//fmt.Println(transport.node.nodeId + " INITING")
 						go transport.node.QueueTask(createTask("init", m))
@@ -115,6 +113,8 @@ func (transport *Transport) processMsg() {
 						go transport.node.gatherAllData(m)
 					case "request_data":
 						go transport.node.ansDataRequest(m)
+					case "update_data":
+						go transport.node.QueueTask(createTask("update_data", m))
 					case "data_reply":
 						go func() {
 							transport.node.dataChannel <- string(m.Data)

@@ -95,18 +95,19 @@ func TestNetwork(t *testing.T) {
 	node7.joinRequest(node0)
 
 	time.Sleep(time.Millisecond * 6700)
-	//node0.QueueTask(createTask("print", createMsg("", "", "1", "", "")))
+	node0.QueueTask(createTask("print", createMsg("", "", "1", "", "")))
 
-	/*node7.nodeFail()
 	time.Sleep(time.Millisecond * 6700)
+	node7.nodeFail()
+	time.Sleep(time.Millisecond * 6300)
 	//time.Sleep(time.Second * 8)
 	wg.Add(1)
 	go node7.startServer(&wg)
 	wg.Wait()
-	fmt.Print("node 7 started again")
-	//time.Sleep(time.Second * 2)
+	fmt.Println("node 7 started again")
+	time.Sleep(time.Second * 2)
 	node7.joinRequest(node0)
-	*/
+
 	//node4.joinRequest(node0)
 	//time.Sleep(time.Second * 7)
 

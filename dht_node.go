@@ -238,7 +238,7 @@ func (dhtNode *DHTNode) join(adr string) {
 		case s := <-dhtNode.succChan:
 			dhtNode.succ[0] = s.hash
 			dhtNode.succ[1] = s.address
-			//go dhtNode.transport.send(createMsg("update_data", s.hash, sender, dhtNode.succ[1], sender))
+			dhtNode.transport.send(createMsg("update_data", s.hash, sender, dhtNode.succ[1], sender))
 			var nodes [len(dhtNode.fingers.fingerList)]*Finger
 			if dhtNode.fingers.fingerList[0] == nil {
 				for i := 0; i < len(dhtNode.fingers.fingerList); i++ {
@@ -596,18 +596,17 @@ func (dhtNode *DHTNode) doHeartbeat() {
 			case c := <-waitRespons.C:
 				c = c
 				if dhtNode.online == 1 {
-					fmt.Println(dhtNode.contact)
-					fmt.Println("I'm dead: " + dhtNode.pred[1])
+					fmt.Println("This node just died: " + dhtNode.pred[1])
 					state = "dead"
 					respons = true
 				}
 			}
 		}
 		if state == "dead" {
-			fmt.Println("dead yao")
 			relocateBackup(dhtNode)
 			dhtNode.pred[0] = ""
 			dhtNode.pred[1] = ""
+
 		}
 		//respons = false
 		state = ""

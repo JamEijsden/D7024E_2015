@@ -61,7 +61,8 @@ func createDataFolder(path string) {
 }
 
 func loadData(path string) ([]byte, string) {
-	fmt.Println("encoding")
+	//fmt.Print("encoding path: ")
+	//fmt.Println(path)
 	file, err := os.Open(path) // a QR code image
 	if err != nil {
 		fmt.Println(err)
@@ -115,7 +116,7 @@ func getAllData(dhtNode *DHTNode) string {
 	for _, f := range files {
 		if f.IsDir() == false {
 
-			fmt.Println(f.Name())
+			//fmt.Println(f.Name())
 			allFiles = allFiles + f.Name() + ","
 		}
 	}
@@ -134,12 +135,12 @@ func replicate(dhtNode *DHTNode, msg *Msg) {
 	finfo, err := os.Stat(path)
 	if err != nil {
 		// no such file or dir
-		fmt.Println(dhtNode.nodeId + "> Creating storage folder")
+		fmt.Println(dhtNode.nodeId + "> Creating storage folder replicate")
 		createDataFolder(path)
 
 	} else if finfo.IsDir() {
-		fmt.Println(finfo)
-		fmt.Println(dhtNode.nodeId + "> Storage folder exists")
+		//fmt.Println(finfo)
+		fmt.Println(dhtNode.nodeId + "> Storage folder exists replicate")
 		// it's a file
 	} else {
 		fmt.Println("It's a file")
@@ -151,40 +152,46 @@ func replicate(dhtNode *DHTNode, msg *Msg) {
 }
 
 func relocateBackup(dhtNode *DHTNode) {
-	fmt.Print(dhtNode.contact)
-	fmt.Println(" > relocateBackup")
-
 	oldpath := "node_storage/" + dhtNode.nodeId + "/" + dhtNode.pred[0] + "/"
 	path := "node_storage/" + dhtNode.nodeId + "/"
 	files, _ := ioutil.ReadDir("node_storage/" + dhtNode.nodeId + "/" + dhtNode.pred[0] + "/")
 	//allFiles := ""
-	fmt.Println(files)
-	for _, f := range files {
-		if f.IsDir() == false {
-			os.Rename(oldpath+f.Name(), path+f.Name())
+	if files == nil {
+		return
+	} else {
+		for _, f := range files {
+			if f.IsDir() == false {
+				//fmt.Print(f.Name())
+				fmt.Print("Relocating backup information in: ")
+				fmt.Println(dhtNode.nodeId)
+				os.Rename(oldpath+f.Name(), path+f.Name())
 
+			}
 		}
+		os.Remove(oldpath)
 	}
-	os.Remove(oldpath)
 }
 
 func updateData(dhtNode *DHTNode, msg *Msg) {
 	files, _ := ioutil.ReadDir("node_storage/" + dhtNode.nodeId + "/")
 	for _, f := range files {
 		if hashString(f.Name()) < msg.Key && f.IsDir() == false {
-			b, _ := loadData(f.Name())
-			m := createDataMsg("data_save", f.Name(), msg.Dst, msg.Src, msg.Dst, b)
+			b, _ := loadData("node_storage/" + dhtNode.nodeId + "/" + f.Name())
+			str := base64.StdEncoding.EncodeToString(b)
+			m := createDataMsg("data_save", f.Name(), msg.Dst, msg.Src, msg.Dst, []byte("data:text/plain;base64,"+str))
 			fmt.Print("saved data in: ")
-			fmt.Println(msg.Dst)
+			fmt.Println(hashString(msg.Dst))
 			go dhtNode.transport.send(m)
 
 		}
 	}
+
+	//erase derp.txt.. not dir.. LOL
 	for _, f := range files {
-		if f.IsDir() == true && f.Name() == dhtNode.pred[0] {
-			fmt.Print(dhtNode.pred[0])
-			fmt.Println(" > folder removed.")
-			os.Remove("./" + dhtNode.pred[0])
+		if f.IsDir() == false && hashString(f.Name()) < msg.Dst {
+			fmt.Print(f.Name())
+			fmt.Println(" removed from backup node.")
+			os.Remove("node_storage/" + dhtNode.nodeId + "/" + f.Name())
 		}
 	}
 }
