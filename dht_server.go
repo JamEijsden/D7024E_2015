@@ -31,7 +31,8 @@ func (transport *Transport) processMsg() {
 				select {
 				case m := <-transport.queue:
 					switch m.Type {
-
+					case "update_data":
+						go transport.node.QueueTask(createTask("update_data", m))
 					case "init":
 						//fmt.Println(transport.node.nodeId + " INITING")
 						go transport.node.QueueTask(createTask("init", m))
@@ -101,7 +102,12 @@ func (transport *Transport) processMsg() {
 						}()
 
 					case "data":
-						go replicate(transport.node, m)
+						if m.Src != transport.node.pred[1] || m.Origin == transport.node.pred[1] {
+							go savedata(transport.node, m)
+						} else {
+							go replicate(transport.node, m)
+						}
+
 					case "allData":
 						go transport.node.gatherAllData(m)
 					case "request_data":
@@ -150,6 +156,7 @@ func (transport *Transport) listen() {
 }
 
 func (transport *Transport) killConnection() {
+	transport.node.online = 0
 	transport.conn.Close()
 	return
 }

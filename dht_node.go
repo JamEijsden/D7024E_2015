@@ -222,13 +222,13 @@ func (dhtNode *DHTNode) join(adr string) {
 	sender := dhtNode.contact.ip + ":" + dhtNode.contact.port
 	dhtNode.pred[0] = ""
 	dhtNode.pred[1] = ""
-
 	dhtNode.transport.send(createMsg("findSucc", dhtNode.nodeId, sender, adr, sender))
 	for {
 		select {
 		case s := <-dhtNode.succChan:
 			dhtNode.succ[0] = s.hash
 			dhtNode.succ[1] = s.address
+			go dhtNode.transport.send(createMsg("update_data", s.hash, sender, dhtNode.succ[1], sender))
 			var nodes [len(dhtNode.fingers.fingerList)]*Finger
 			if dhtNode.fingers.fingerList[0] == nil {
 				for i := 0; i < len(dhtNode.fingers.fingerList); i++ {
@@ -456,6 +456,8 @@ func (dhtNode *DHTNode) taskHandler() {
 			select {
 			case t := <-dhtNode.taskQueue:
 				switch t.Type {
+				case "update_data":
+					updateData(dhtNode, t.M)
 
 				case "findSucc":
 					dhtNode.startFindSucc(t.M)
@@ -525,7 +527,7 @@ func (dhtNode *DHTNode) fingerTimer() {
 
 			time.Sleep(time.Second * 4)
 			go dhtNode.QueueTask(createTask("fixFingers", nil))
-			if dhtNode.nodeId == "00" {
+			if dhtNode.nodeId == "10" {
 				dhtNode.QueueTask(createTask("print", createMsg("", "", "1", "", "")))
 			}
 		} else {
@@ -574,8 +576,7 @@ func (dhtNode *DHTNode) doHeartbeat() {
 	var waitRespons *time.Timer
 	if dhtNode.pred[0] != "" {
 		dhtNode.transport.send(createMsg("heartbeat", dhtNode.nodeId, src, dhtNode.pred[1], src))
-
-		waitRespons = time.NewTimer(time.Millisecond * 300)
+		waitRespons = time.NewTimer(time.Millisecond * 1000)
 		for !respons {
 			select {
 			case r := <-dhtNode.heartbeat:
@@ -585,15 +586,18 @@ func (dhtNode *DHTNode) doHeartbeat() {
 			case c := <-waitRespons.C:
 				c = c
 				if dhtNode.online == 1 {
+					fmt.Println(dhtNode.contact)
+					fmt.Println("I'm dead: " + dhtNode.pred[1])
 					state = "dead"
 					respons = true
 				}
 			}
 		}
 		if state == "dead" {
+			fmt.Println("dead yao")
+			relocateBackup(dhtNode)
 			dhtNode.pred[0] = ""
 			dhtNode.pred[1] = ""
-			return
 		}
 		//respons = false
 		state = ""
