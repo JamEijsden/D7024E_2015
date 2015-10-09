@@ -3,6 +3,7 @@ package dht
 import (
 	// Standard library packages
 	"bytes"
+	"encoding/base64"
 	"encoding/json"
 	"fmt"
 	"html/template"
@@ -81,8 +82,8 @@ func getFileInfo(dc *DataController) string {
 
 				site = site + "No stored data found in Skynet <br>"
 			}
-			updateButton := "<div><button id='updateB' name='' onclick='startUpload(this.name)'>Commit changes to file</button></div>"
-			site = site + "</div><div style='text-align:center;float:right;max-width:50%;min-width:50%;margin:auto 0;min-height:25%;'><h2>File Content</h2><textarea style='max-width:75%; min-width:75%; max-height:75%; min-height:50%;' id='data_content'></textarea>" + "<input type='file' id='fileUpdate'/>" + updateButton + "</br><progress id='progressBar' max='100' value='0'/></div>"
+			updateButton := "<div><button id='updateB' name='' onclick='updateData()'>Save changes</button></div>"
+			site = site + "</div><div style='text-align:center;float:right;max-width:50%;min-width:50%;margin:auto 0;min-height:25%;'><h2>File Content</h2><textarea style='max-width:75%; min-width:75%; max-height:75%; min-height:50%;' id='data_content'></textarea>" + updateButton + "</div>"
 			return site
 			//merge template ‘t’ with content of ‘p’
 
@@ -129,10 +130,19 @@ func (dc *DataController) deleteData(w http.ResponseWriter, r *http.Request, p h
 }
 
 func (dc DataController) updateData(w http.ResponseWriter, r *http.Request, p httprouter.Params) {
-	//filename := p.ByName("key")
-	//dc.Node.updateData(filename)
-	// Marshal provided interface into JSON structure
+	data := Data{}
 
+	decoder := json.NewDecoder(r.Body)
+	err := decoder.Decode(&data)
+	if err != nil {
+		fmt.Println(err.Error())
+	}
+
+	encData := []byte(data.Content)
+	str := base64.StdEncoding.EncodeToString(encData)
+	fmt.Println(str)
+
+	dc.Node.storeData(data.Filename, "data:text/plain;base64,"+str)
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(200)
 }
@@ -167,7 +177,7 @@ func WebServer(dhtNode *DHTNode) {
 	r.GET("/storage/:key", dc.GetData)
 	r.DELETE("/storage/:key", dc.deleteData)
 	r.POST("/storage", dc.uploadData)
-	//r.PUT("/storage/:key", dc.updateData)
+	r.PUT("/storage/:key", dc.updateData)
 	//router.Handle("/users/{id}", handler(removeUser)).Methods("DELETE")
 	//adr := dhtNode.contact.ip + ":" + dhtNode.contact.port
 	//site := ""

@@ -60,7 +60,7 @@ function getData(request){
 			console.log(obj);
 			//location.reload()
 			updateB.name = obj.Filename
-			content.id = obj.Filename;
+			//content.id = obj.Filename;
 			content.value = obj.Content;
 		
 		} else {
@@ -88,7 +88,7 @@ function deleteData(request){
 	xhr.onload = function() {
 		if (xhr.status == 200) {
 			location.reload();
-			alert("Delete succeeded");
+			//alert("Delete succeeded");
 		
 		} else {
 			alert("Error! Delete failed");
@@ -109,18 +109,23 @@ function deleteData(request){
 
 <script>
 function updateData(){
-	   var filename= document.getElementById("updateB");
+	var filename = document.getElementById("updateB");
+	var content = document.getElementById("data_content");
 	data = {};
-	data.name = filename.name;
+	data.filename = filename.name;
+	data.content = content.value;
+	data.from_node = "";
     var xhr = new XMLHttpRequest();
 
-	
-          data.file = evt.target.result; 
 		  console.log(data);
            xhr.onload = function() {
 				if (xhr.status == 200) {
-					location.reload();
-					alert("Success! Upload completed");
+					//location.reload();
+					//alert("Success! Upload completed");
+					var temp = filename.innerHTML;
+					filename.innerHTML = "Changes saved";	
+					setTimeout(function(){filename.innerHTML = temp;},3000);
+					
 				} else {
 					alert("Error! Upload failed");
 				}
@@ -128,9 +133,7 @@ function updateData(){
 			xhr.onerror = function() {
 				alert("Error! Upload failed. Cannot connect to server.");
 			};
-    
-			progressBar.value = 0;
-			xhr.open('POST', 'http://{{.ADR}}/storage', true);
+			xhr.open('PUT', 'http://{{.ADR}}/storage/'+data.filename, true);
 			xhr.setRequestHeader("Content-Type", "application/json");
 			xhr.send(JSON.stringify(data));
 	
