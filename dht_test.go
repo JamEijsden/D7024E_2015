@@ -94,10 +94,10 @@ func TestNetwork(t *testing.T) {
 
 	node7.joinRequest(node0)
 
-	time.Sleep(time.Millisecond 6700)
+	time.Sleep(time.Millisecond * 6700)
 	//node0.QueueTask(createTask("print", createMsg("", "", "1", "", "")))
 
-	node0.nodeFail()
+	//node0.nodeFail()
 	time.Sleep(time.Millisecond * 6700)
 	/*time.Sleep(time.Second * 8)
 	wg.Add(1)
