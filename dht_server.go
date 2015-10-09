@@ -100,8 +100,10 @@ func (transport *Transport) processMsg() {
 							transport.node.heartbeat <- m.Key
 						}()
 
-					case "data":
+					case "data_save":
 						go replicate(transport.node, m)
+					case "data_remove":
+						go deleteData(transport.node, m)
 					case "allData":
 						go transport.node.gatherAllData(m)
 					case "request_data":

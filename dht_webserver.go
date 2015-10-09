@@ -50,7 +50,8 @@ func (dc *DataController) ListData(w http.ResponseWriter, r *http.Request, _ htt
 	dc.site = scripts + "<h1 style='text-align:center;'>Welcome to Skynet!</h1>"
 	dc.site = dc.site + getFileInfo(dc)
 
-	dc.site = dc.site + "</div><div id='korv' style='text-align:center;min-width:100%;min-height:25%;position: absolute;bottom: 0;'><h2>Upload file</h2><input type='file' id='fileInput'/><button onclick='startUpload();'>Upload</button></br><progress id='progressBar' max='100' value='0'/></div>"
+	dc.site = dc.site + "</div><div id='korv' style='text-align:center;min-width:100%; max-height:25%; min-height:25%; position: absolute;bottom: 0;'><h2>Upload file</h2><input type='file' id='fileInput'/><button name='button' onclick='startUpload(this.name);'>Upload</button></br><progress id='progressBar' max='100' value='0'/></div>"
+
 	t, _ = t.Parse(dc.site) //parse some content and generate a template, which is an internal representation
 
 	p := dc //define an instance with required field
@@ -80,7 +81,8 @@ func getFileInfo(dc *DataController) string {
 
 				site = site + "No stored data found in Skynet <br>"
 			}
-			site = site + "</div><div style='text-align:center;float:right;max-width:50%;min-width:50%;margin:auto 0;min-height:25%;'><h2>File Content</h2><p id='data_content'></p></div>"
+			updateButton := "<div><button id='updateB' name='' onclick='startUpload(this.name)'>Commit changes to file</button></div>"
+			site = site + "</div><div style='text-align:center;float:right;max-width:50%;min-width:50%;margin:auto 0;min-height:25%;'><h2>File Content</h2><textarea style='max-width:75%; min-width:75%; max-height:75%; min-height:50%;' id='data_content'></textarea>" + "<input type='file' id='fileUpdate'/>" + updateButton + "</br><progress id='progressBar' max='100' value='0'/></div>"
 			return site
 			//merge template ‘t’ with content of ‘p’
 
@@ -112,6 +114,29 @@ func (dc *DataController) GetData(w http.ResponseWriter, r *http.Request, p http
 	//fmt.Fprintln(w, &data)
 	fmt.Fprintf(w, "%s", uj)
 }
+
+func (dc *DataController) deleteData(w http.ResponseWriter, r *http.Request, p httprouter.Params) {
+
+	// Populate the user data
+	filename := p.ByName("key")
+	dc.Node.removeData(filename)
+	// Marshal provided interface into JSON structure
+
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(200)
+	//fmt.Fprintln(w, &data)
+	//fmt.Fprintf(w, "%s", )
+}
+
+func (dc DataController) updateData(w http.ResponseWriter, r *http.Request, p httprouter.Params) {
+	//filename := p.ByName("key")
+	//dc.Node.updateData(filename)
+	// Marshal provided interface into JSON structure
+
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(200)
+}
+
 func (dc DataController) uploadData(w http.ResponseWriter, r *http.Request, p httprouter.Params) {
 	file := File{}
 
@@ -140,7 +165,9 @@ func WebServer(dhtNode *DHTNode) {
 	r := httprouter.New()
 	r.GET("/", dc.ListData)
 	r.GET("/storage/:key", dc.GetData)
+	r.DELETE("/storage/:key", dc.deleteData)
 	r.POST("/storage", dc.uploadData)
+	//r.PUT("/storage/:key", dc.updateData)
 	//router.Handle("/users/{id}", handler(removeUser)).Methods("DELETE")
 	//adr := dhtNode.contact.ip + ":" + dhtNode.contact.port
 	//site := ""
@@ -176,10 +203,10 @@ func WebServer(dhtNode *DHTNode) {
 }
 */
 func createFileDiv(filename string, node *DHTNode) string {
-	str := "<div style='margin:0 auto;text-align:center;'>" + filename
-	adr := node.contact.ip + ":" + node.contact.port
-	str = str + "<br><a href=# id='" + filename + "' onclick='getData(this.id)';> open</a>     "
-	str = str + "<a id='a.delete' href='http://" + adr + "/storag/" + filename + "'> remove</a><br>"
+	str := "<div style='margin-right:15px;text-align:center;'>" + filename
+	//adr := node.contact.ip + ":" + node.contact.port
+	str = str + "<br><button  id='" + filename + "' onclick='getData(this.id)';> open</button>     "
+	str = str + "<button id='" + filename + "' onclick='deleteData(this.id)';> remove</button><br>"
 	str = str + "</div>"
 	//fmt.Println(str)
 	return str

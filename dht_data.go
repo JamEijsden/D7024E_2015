@@ -30,21 +30,39 @@ func initStorage(dhtNode *DHTNode) {
 
 }
 
-func createDataFolder(path string) {
+func deleteData(dhtNode *DHTNode, msg *Msg) {
+	if msg.Src != dhtNode.pred[1] || msg.Origin == dhtNode.pred[1] {
+		err := os.Remove("node_storage/" + dhtNode.nodeId + "/" + msg.Key)
+		if err != nil {
+			fmt.Println(err)
+			return
+		}
+		msg.Src = dhtNode.contact.ip + ":" + dhtNode.contact.port
+		msg.Dst = dhtNode.succ[1]
+		go dhtNode.transport.send(msg)
 
+	} else {
+		path := "node_storage/" + dhtNode.nodeId + "/" + dhtNode.pred[0]
+		err := os.Remove(path + "/" + msg.Key)
+		if err != nil {
+			fmt.Println(err)
+			return
+		}
+	}
+}
+
+func createDataFolder(path string) {
 	err := os.Mkdir(path, 0777)
 	if err != nil {
 		fmt.Println(path + " -error: " + err.Error())
 		//fmt.Fatalf("Mkdir %q: %s", path, err)
 	}
 	//defer RemoveAll(tmpDir + "/_TestMkdirAll_")
-
 }
 
 func loadData(path string) ([]byte, string) {
 	fmt.Println("encoding")
 	file, err := os.Open(path) // a QR code image
-
 	if err != nil {
 		fmt.Println(err)
 		os.Exit(1)
@@ -68,17 +86,9 @@ func loadData(path string) ([]byte, string) {
 func fileDecode(dhtNode *DHTNode, data []byte, path string) {
 	a := strings.Split(string(data), ",")
 	reader, err := base64.StdEncoding.DecodeString(a[1])
-	//fmt.Println(a)
-	//fmt.Println("> Decoding")
-	//fmt.Println(string(reader))
 	if err != nil {
 		fmt.Println(err.Error())
 	}
-	//fmt.Println(fm)
-
-	//imgBase64Str := base64.StdEncoding.EncodeToString(data)
-	// convert []byte to image for saving to file
-	//file, _, _ := image.Decode(bytes.NewReader(data))
 
 	var fm os.FileMode
 	//save the imgByte to file
@@ -99,14 +109,6 @@ func fileDecode(dhtNode *DHTNode, data []byte, path string) {
 
 }
 
-/*func sendData(dhtNode *DHTNode) {
-	src := dhtNode.contact.ip + ":" + dhtNode.contact.port
-	data, name := loadData()
-
-
-}
-*/
-
 func getAllData(dhtNode *DHTNode) string {
 	files, _ := ioutil.ReadDir("node_storage/" + dhtNode.nodeId + "/")
 	allFiles := ""
@@ -118,8 +120,8 @@ func getAllData(dhtNode *DHTNode) string {
 		}
 	}
 	return allFiles
-
 }
+
 func replicate(dhtNode *DHTNode, msg *Msg) {
 
 	if msg.Src != dhtNode.pred[1] || msg.Origin == dhtNode.pred[1] {
@@ -135,10 +137,8 @@ func replicate(dhtNode *DHTNode, msg *Msg) {
 			// no such file or dir
 			fmt.Println(dhtNode.nodeId + "> Creating storage folder")
 			createDataFolder(path)
-
-		}
-		fmt.Println(finfo)
-		if finfo.IsDir() {
+		} else if finfo.IsDir() {
+			fmt.Println(finfo)
 			fmt.Println(dhtNode.nodeId + "> Storage folder exists")
 			// it's a file
 		} else {

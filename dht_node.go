@@ -144,7 +144,7 @@ func (dhtNode *DHTNode) gatherAllData(msg *Msg) {
 
 /* Adds dataUpload to Task Queue */
 func (dhtNode *DHTNode) queueDataUpload(path string) {
-	go dhtNode.QueueTask(createTask("data", createMsg("", path, "", "", "")))
+	go dhtNode.QueueTask(createTask("save_data", createMsg("", path, "", "", "")))
 }
 
 /* Looks for responsible node for the data and tells it to store it. */
@@ -155,10 +155,20 @@ func (dhtNode *DHTNode) storeData(name, data_string string) {
 	hash := hashString(name)
 
 	resp := dhtNode.findSuccesor(hash)
-	m := createDataMsg("data", name, src, resp.address, src, []byte(data_string))
-	fmt.Println(m)
+	m := createDataMsg("data_save", name, src, resp.address, src, []byte(data_string))
 	go dhtNode.transport.send(m)
 
+}
+
+func (dhtNode *DHTNode) removeData(filename string) {
+	src := dhtNode.contact.ip + ":" + dhtNode.contact.port
+
+	//data_byte, name := loadData(path)
+	hash := hashString(filename)
+
+	resp := dhtNode.findSuccesor(hash)
+	m := createMsg("data_remove", filename, src, resp.address, src)
+	go dhtNode.transport.send(m)
 }
 
 func (dhtNode *DHTNode) getData(filename string) (string, string) {
