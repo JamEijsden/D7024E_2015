@@ -143,14 +143,20 @@ func (dhtNode *DHTNode) gatherAllData(msg *Msg) {
 }
 
 /* Adds dataUpload to Task Queue */
-func (dhtNode *DHTNode) queueDataUpload(path string) {
-	go dhtNode.QueueTask(createTask("save_data", createMsg("", path, "", "", "")))
+func (dhtNode *DHTNode) queueDataDelete(path string, data string) {
+	go dhtNode.QueueTask(createTask("data_delete", createMsg("", path, "", "", "")))
+}
+func (dhtNode *DHTNode) queueDataUpload(path string, data string) {
+	go dhtNode.QueueTask(createTask("data_save", createDataMsg("", path, "", "", "", []byte(data))))
+}
+func (dhtNode *DHTNode) queueDataGet(path string, data string) {
+	go dhtNode.QueueTask(createTask("data_get", createMsg("", path, "", "", "")))
 }
 
 /* Looks for responsible node for the data and tells it to store it. */
 func (dhtNode *DHTNode) storeData(name, data_string string) {
 	src := dhtNode.contact.ip + ":" + dhtNode.contact.port
-
+	fmt.Println(data_string)
 	//data_byte, name := loadData(path)
 	hash := hashString(name)
 
@@ -476,9 +482,13 @@ func (dhtNode *DHTNode) taskHandler() {
 
 				case "fixFingers":
 					fixFingers(dhtNode)
-				case "data":
+				case "data_save":
 					dhtNode.storeData(t.M.Key, string(t.M.Data))
+				case "data_delete":
+					dhtNode.removeData(t.M.Key)
 					//time.Sleep(time.Millisecond * 500)
+				case "data_get":
+					dhtNode.getData(t.M.Key)
 				case "notify":
 					dhtNode.notify(t.M)
 				case "stabilize":

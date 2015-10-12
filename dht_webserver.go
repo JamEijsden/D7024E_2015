@@ -51,7 +51,7 @@ func (dc *DataController) ListData(w http.ResponseWriter, r *http.Request, _ htt
 	dc.site = scripts + "<h1 style='text-align:center;'>Welcome to Skynet!</h1>"
 	dc.site = dc.site + getFileInfo(dc)
 
-	dc.site = dc.site + "</div><div id='korv' style='text-align:center;min-width:100%; max-height:25%; min-height:25%; position: absolute;bottom: 0;'><h2>Upload file</h2><input type='file' id='fileInput'/><button name='button' onclick='startUpload(this.name);'>Upload</button></br><progress id='progressBar' max='100' value='0'/></div>"
+	dc.site = dc.site + "</div><div id='korv' style='border-top-style:solid; border-top-width:thin; border-top-color:#B8B8B8; text-align:center;min-width:80%;max-width:80%; max-height:25%; min-height:25%; position: absolute;bottom: 0;left:10%;'><h2>Upload file</h2><input type='file' id='fileInput'/><button name='button' onclick='startUpload(this.name);'>Upload</button></br><progress id='progressBar' max='100' value='0'/></div>"
 
 	t, _ = t.Parse(dc.site) //parse some content and generate a template, which is an internal representation
 
@@ -104,7 +104,6 @@ func (dc *DataController) GetData(w http.ResponseWriter, r *http.Request, p http
 	data.Content = content
 	data.Filename = filename
 	data.From_node = from_node
-	fmt.Println(data)
 	//fmt.Fprintln(w, u.content)
 	// Marshal provided interface into JSON structure
 	uj, e := json.Marshal(data)
@@ -140,9 +139,8 @@ func (dc DataController) updateData(w http.ResponseWriter, r *http.Request, p ht
 
 	encData := []byte(data.Content)
 	str := base64.StdEncoding.EncodeToString(encData)
-	fmt.Println(str)
 
-	dc.Node.storeData(data.Filename, "data:text/plain;base64,"+str)
+	dc.Node.queueDataUpload(data.Filename, "data:text/plain;base64,"+str)
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(200)
 }
@@ -155,18 +153,7 @@ func (dc DataController) uploadData(w http.ResponseWriter, r *http.Request, p ht
 	if err != nil {
 		fmt.Println(err.Error())
 	}
-	fmt.Println(file)
-	dc.Node.storeData(file.Name, file.File)
-	/*body, err := ioutil.ReadAll(r.Body)
-	if err != nil {
-		panic()
-	}
-	fmt.Println(string(body))
-	err = json.Unmarshal(body, &file)
-	if err != nil {
-		panic()
-	}
-	log.Println(t.Test)*/
+	dc.Node.queueDataUpload(file.Name, file.File)
 }
 
 func WebServer(dhtNode *DHTNode) {
