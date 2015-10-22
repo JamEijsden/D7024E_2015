@@ -83,7 +83,7 @@ func (transport *Transport) processMsg() {
 							transport.node.responseMsg <- m
 						}()
 					case "heartbeat":
-						go transport.node.heartbeatRespons(m)
+						go transport.send(createMsg("heartbeat_respons", transport.node.nodeId, m.Dst, m.Src, m.Dst))
 
 						//go transport.node.QueueTask(createTask("foundSucc", m))
 					case "findSucc":

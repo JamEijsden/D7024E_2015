@@ -13,15 +13,30 @@ import (
 
 func initStorage(dhtNode *DHTNode) {
 
-	finfo, err := os.Stat("node_storage/" + dhtNode.nodeId)
+	finfo, err := os.Stat("node_storage")
 	if err != nil {
 		// no such file or dir
 		fmt.Println(dhtNode.nodeId + "> Creating storage folder")
-		createDataFolder("node_storage/" + dhtNode.nodeId)
+		createDataFolder("node_storage")
 		return
 	}
 	if finfo.IsDir() {
 		fmt.Println(dhtNode.nodeId + "> Storage folder exists")
+		// it's a file
+	} else {
+		fmt.Println("It's a file")
+		// it's a directory
+	}
+
+	finfo, err = os.Stat("node_storage/" + dhtNode.nodeId)
+	if err != nil {
+		// no such file or dir
+		fmt.Println(dhtNode.nodeId + "> Creating node folder")
+		createDataFolder("node_storage/" + dhtNode.nodeId)
+		return
+	}
+	if finfo.IsDir() {
+		fmt.Println(dhtNode.nodeId + "> Storage node exists")
 		// it's a file
 	} else {
 		fmt.Println("It's a file")
