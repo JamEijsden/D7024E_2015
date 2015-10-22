@@ -7,21 +7,8 @@ import (
 	"time"
 )
 
-func (node *DHTNode) joinRequest(dhtNode *DHTNode) {
-	rec := dhtNode.contact.ip + ":" + dhtNode.contact.port
-	//go node.sendMsg("request", rec)
-	go node.join(rec)
-	//retry := time.Timer(time.Millisecond.500)
-	time.Sleep(time.Millisecond * 500)
-
-	/*if node.succ[1] == "" {
-		fmt.Println("NOOOPE")
-		go node.sendMsg("request", rec)
-	}*/
-
-}
-
 func TestNetwork(t *testing.T) {
+	// go test -test.run TestNetork
 	fmt.Println("Beginning test..")
 	var wg sync.WaitGroup
 	/*
@@ -125,6 +112,21 @@ func TestNetwork(t *testing.T) {
 	time.Sleep(time.Second * 500)
 
 }
+
+func (node *DHTNode) joinRequest(dhtNode *DHTNode) {
+
+	rec := dhtNode.contact.ip + ":" + dhtNode.contact.port
+	//go node.sendMsg("request", rec)
+	go node.join(rec)
+	//retry := time.Timer(time.Millisecond.500)
+	time.Sleep(time.Millisecond * 500)
+
+	/*if node.succ[1] == "" {
+		fmt.Println("NOOOPE")
+		go node.sendMsg("request", rec)
+	}*/
+}
+
 func (dhtNode *DHTNode) heartbeatRespons(msg *Msg) {
 	src := dhtNode.contact.ip + ":" + dhtNode.contact.port
 	dhtNode.transport.send(createMsg("heartbeat_respons", dhtNode.nodeId, src, msg.Src, msg.Origin))

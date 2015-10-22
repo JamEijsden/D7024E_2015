@@ -124,6 +124,7 @@ func getAllData(dhtNode *DHTNode) string {
 }
 
 func savedata(dhtNode *DHTNode, msg *Msg) {
+	fmt.Println(dhtNode.nodeId + " SAAAAAVEED")
 	go fileDecode(dhtNode, msg.Data, ("node_storage/" + dhtNode.nodeId + "/" + msg.Key))
 	msg.Src = dhtNode.contact.ip + ":" + dhtNode.contact.port
 	msg.Dst = dhtNode.succ[1]
@@ -131,6 +132,7 @@ func savedata(dhtNode *DHTNode, msg *Msg) {
 }
 
 func replicate(dhtNode *DHTNode, msg *Msg) {
+	fmt.Println(dhtNode.nodeId + " REEPLICIIATIED")
 	path := "node_storage/" + dhtNode.nodeId + "/" + dhtNode.pred[0]
 	finfo, err := os.Stat(path)
 	if err != nil {

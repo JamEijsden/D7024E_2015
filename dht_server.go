@@ -100,7 +100,7 @@ func (transport *Transport) processMsg() {
 						}()
 
 					case "data_save":
-						if m.Src != transport.node.pred[1] || m.Origin == transport.node.pred[1] {
+						if m.Src != transport.node.pred[1] || m.Origin == transport.node.succ[1] {
 							go savedata(transport.node, m)
 						} else {
 							go replicate(transport.node, m)
