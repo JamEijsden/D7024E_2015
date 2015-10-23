@@ -2,12 +2,11 @@ package dht
 
 import (
 	"fmt"
-	//"github.com/jameijsden/dht"
 	"sync"
 	"time"
 )
 
-func main() {
+func BootUpNode(port string) {
 	// go test -test.run TestNetork
 	fmt.Println("Booting node..")
 	var wg sync.WaitGroup
@@ -37,7 +36,7 @@ func main() {
 			node7 := makeDHTNode(&id8, "localhost", "1117")
 
 	*/
-	node := makeDHTNode(nil, "localhost", "1110")
+	node := makeDHTNode(nil, "localhost", port)
 
 	wg.Add(1)
 	go node.startServer(&wg)
@@ -55,14 +54,18 @@ func (node *DHTNode) joinRequest() {
 	rec := node.contact.ip + ":" + node.contact.port
 	//go node.sendMsg("request", rec)
 	if "localhost:1110" != rec {
-		go node.join(rec)
+		fmt.Println("Trying to join localhost:1110")
+		go node.join("localhost:1110")
 		//retry := time.Timer(time.Millisecond.500)
 		time.Sleep(time.Millisecond * 100)
 	}
 
+	/*if node.succ[1] == "" {
+		fmt.Println("NOOOPE")
+		go node.sendMsg("request", rec)
+	}*/
 }
 
-/*
 func (dhtNode *DHTNode) heartbeatRespons(msg *Msg) {
 	src := dhtNode.contact.ip + ":" + dhtNode.contact.port
 	dhtNode.transport.send(createMsg("heartbeat_respons", dhtNode.nodeId, src, msg.Src, msg.Origin))
@@ -75,4 +78,4 @@ func printFingers(node *DHTNode) {
 	}
 	fmt.Println("No more fingers")
 
-}*/
+}
