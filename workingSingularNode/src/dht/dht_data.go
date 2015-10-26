@@ -19,30 +19,30 @@ func initStorage(dhtNode *DHTNode) {
 		fmt.Println(dhtNode.nodeId + "> Creating storage folder")
 		createDataFolder("node_storage")
 		//return
-	}
-	if finfo.IsDir() {
-		fmt.Println(dhtNode.nodeId + "> Storage folder exists")
-		// it's a file
 	} else {
-		fmt.Println("It's a file")
-		// it's a directory
+		if finfo.IsDir() {
+			fmt.Println(dhtNode.nodeId + "> Storage folder exists")
+			// it's a file
+		} else {
+			fmt.Println("It's a file")
+			// it's a directory
+		}
 	}
-
 	finfo, err = os.Stat("node_storage/" + dhtNode.nodeId)
 	if err != nil {
 		// no such file or dir
 		fmt.Println(dhtNode.nodeId + "> Creating node folder")
 		createDataFolder("node_storage/" + dhtNode.nodeId)
 		return
+	}else {
+		if finfo.IsDir() {
+			fmt.Println(dhtNode.nodeId + "> Storage node exists")
+			// it's a file
+		} else {
+			fmt.Println("It's a file")
+			// it's a directory
+		}
 	}
-	if finfo.IsDir() {
-		fmt.Println(dhtNode.nodeId + "> Storage node exists")
-		// it's a file
-	} else {
-		fmt.Println("It's a file")
-		// it's a directory
-	}
-
 }
 
 func deleteData(dhtNode *DHTNode, msg *Msg) {

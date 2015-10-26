@@ -3,12 +3,12 @@ package main
 import (
 //	"fmt"
 	"dht"
-	"os"
+	//"os"
 )
 
 func main(){
-	var port = os.Args[1]	
+	//var port = os.Args[1]	
 //	fmt.Println(port)
-	dht.BootUpNode(port)
+	dht.BootUpNode()
 
 }

@@ -147,11 +147,13 @@ func (transport *Transport) listen() {
 		}
 		msg := Msg{}
 		err = dec.Decode(&msg) //decodes the message where the message adress is and adds an error msg if there's none.
-//		fmt.Println(transport.bindAddress + "> Received Message from " + msg.Src)
-		//fmt.Println(msg)
+	if msg.Src != msg.Dst {
+//		fmt.Println(msg)
+	}
 		go func() {
 			transport.queue <- &msg
 		}()
+
 		//return
 		//	we	got	a	message, do something
 
