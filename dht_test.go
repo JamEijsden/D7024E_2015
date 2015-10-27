@@ -18,13 +18,13 @@ func (node *DHTNode) joinRequest(dhtNode *DHTNode) {
 		fmt.Println("NOOOPE")
 		go node.sendMsg("request", rec)
 	}*/
+
 }
 
 func TestNetwork(t *testing.T) {
 	fmt.Println("Beginning test..")
 	var wg sync.WaitGroup
-
-	id1 := "00"
+	/*id1 := "00"
 	id2 := "01"
 	id3 := "02"
 	id4 := "03"
@@ -48,32 +48,32 @@ func TestNetwork(t *testing.T) {
 
 	node7 := makeDHTNode(&id8, "localhost", "1117")
 
-	/*
-		node0 := makeDHTNode(nil, "localhost", "1110")
+	*/
+	node0 := makeDHTNode(nil, "localhost", "1110")
 
-		node1 := makeDHTNode(nil, "localhost", "1111")
+	node1 := makeDHTNode(nil, "localhost", "1111")
 
-		node2 := makeDHTNode(nil, "localhost", "1112")
+	node2 := makeDHTNode(nil, "localhost", "1112")
 
-		node3 := makeDHTNode(nil, "localhost", "1113")
+	node3 := makeDHTNode(nil, "localhost", "1113")
 
-		node4 := makeDHTNode(nil, "localhost", "1114")
+	node4 := makeDHTNode(nil, "localhost", "1114")
 
-		node5 := makeDHTNode(nil, "localhost", "1115")
+	node5 := makeDHTNode(nil, "localhost", "1115")
 
-		node6 := makeDHTNode(nil, "localhost", "1116")
+	node6 := makeDHTNode(nil, "localhost", "1116")
 
-		node7 := makeDHTNode(nil, "localhost", "1117") */
+	node7 := makeDHTNode(nil, "localhost", "1117")
 
 	//	node9 := makeDHTNode(nil, "localhost", "1119") */
-	wg.Add(7)
+	wg.Add(8)
 	go node0.startServer(&wg)
 	go node1.startServer(&wg)
 	go node2.startServer(&wg)
 	go node3.startServer(&wg)
 	go node4.startServer(&wg)
 	go node5.startServer(&wg)
-	//go node6.startServer(&wg)
+	go node6.startServer(&wg)
 	go node7.startServer(&wg)
 	wg.Wait()
 
@@ -89,28 +89,33 @@ func TestNetwork(t *testing.T) {
 
 	node5.joinRequest(node0)
 
-	//node6.joinRequest(node0)
+	node6.joinRequest(node0)
 
 	node7.joinRequest(node0)
 
-	time.Sleep(time.Millisecond * 6700)
+	time.Sleep(time.Millisecond * 10000)
 	node0.QueueTask(createTask("print", createMsg("", "", "1", "", "")))
 
-	time.Sleep(time.Millisecond * 6700)
-	//node6.nodeFail()
-	time.Sleep(time.Millisecond * 6300)
-	node0.QueueTask(createTask("print", createMsg("", "", "1", "", "")))
-	node6.joinRequest(node0)
-	time.Sleep(time.Millisecond * 6300)
-	node0.QueueTask(createTask("print", createMsg("", "", "1", "", "")))
-	//time.Sleep(time.Second * 8)
-	/*wg.Add(1)
+	time.Sleep(time.Millisecond * 2000)
+	node7.nodeFail()
+	time.Sleep(time.Millisecond * 10000)
+	//node0.QueueTask(createTask("print", createMsg("", "", "1", "", "")))
+	//time.Sleep(time.Millisecond * 2000)
+	//node0.nodeFail()
+	//time.Sleep(time.Millisecond * 5000)
+	wg.Add(1)
 	go node7.startServer(&wg)
 	wg.Wait()
-	fmt.Println("node 7 started again")
-	time.Sleep(time.Second * 2)
+	time.Sleep(time.Millisecond * 8000)
 	node7.joinRequest(node0)
-	*/
+	fmt.Println("node 7 started again")
+	time.Sleep(time.Millisecond * 7000)
+	node0.QueueTask(createTask("print", createMsg("", "", "1", "", "")))
+	//time.Sleep(time.Second * 8)
+	//time.Sleep(time.Second * 2)
+	//time.Sleep(time.Second * 10)
+	//node0.QueueTask(createTask("print", createMsg("", "", "1", "", "")))
+
 	//node4.joinRequest(node0)
 	//time.Sleep(time.Second * 7)
 
