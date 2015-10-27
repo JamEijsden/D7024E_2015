@@ -75,6 +75,7 @@ func (transport *Transport) processMsg() {
 					//TESTAR EN SAK
 					case "ack":
 						go func() {
+							//fmt.Print("ack")
 							transport.node.ackMsg <- m
 						}()
 					case "response":

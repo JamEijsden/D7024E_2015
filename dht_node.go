@@ -209,10 +209,11 @@ func (dhtNode *DHTNode) notify(msg *Msg) {
 
 /* Checks if successors is correct and fixes if not */
 func (dhtNode *DHTNode) stabi() {
+	found := false
 	sender := dhtNode.contact.ip + ":" + dhtNode.contact.port
 	go dhtNode.transport.send(createMsg("pred", dhtNode.nodeId, sender, dhtNode.succ[1], sender))
 	waitRespons := time.NewTimer(time.Millisecond * 2000)
-	for {
+	for found != true {
 		select {
 		case r := <-dhtNode.responseMsg:
 			if between([]byte(dhtNode.nodeId), []byte(dhtNode.succ[0]), []byte(r.Key)) && r.Key != "" && dhtNode.nodeId != r.Key {
@@ -221,21 +222,22 @@ func (dhtNode *DHTNode) stabi() {
 				dhtNode.succ[0] = r.Key
 				dhtNode.succ[1] = r.Origin
 				waitRespons.Stop()
+				found = true
 				return
 			}
 			go dhtNode.transport.send(createMsg("notify", dhtNode.nodeId, sender, dhtNode.succ[1], sender))
 			return
 		case s := <-waitRespons.C:
 			s = s
-			fmt.Println("succ is dead")
-			dhtNode.succ[0] = dhtNode.fingers.fingerList[1].hash
-			dhtNode.succ[1] = dhtNode.fingers.fingerList[1].address
-			//if dhtNode.online == 1 {
-			//	findAliveSucc(dhtNode)
-			//	fmt.Println("out of findAliveSucc")
-			//}
+			if dhtNode.online == 1 {
+				findAliveSucc(dhtNode)
+				fmt.Println("out of findAliveSucc")
+				found = true
+				return
+			}
 		}
 	}
+	found = false
 }
 
 func findAliveSucc(dhtNode *DHTNode) {
@@ -261,12 +263,13 @@ func findAliveSucc(dhtNode *DHTNode) {
 					r = r
 					dhtNode.succ[0] = dhtNode.fingers.fingerList[i].hash
 					dhtNode.succ[1] = dhtNode.fingers.fingerList[i].address
-					found = true
 					waitRespons.Stop()
+					found = true
 					return
 
 				case s := <-waitRespons.C:
 					fmt.Println("Fail response")
+					fmt.Println(dhtNode.fingers.fingerList[i].address)
 					s = s
 					tempAddr = dhtNode.fingers.fingerList[i].address
 					found = true
@@ -288,7 +291,10 @@ func (dhtNode *DHTNode) join(adr string) {
 		case s := <-dhtNode.succChan:
 			dhtNode.succ[0] = s.hash
 			dhtNode.succ[1] = s.address
-			dhtNode.transport.send(createMsg("update_data", s.hash, sender, dhtNode.succ[1], sender))
+			go func() {
+				time.Sleep(time.Second * 3)
+				dhtNode.transport.send(createMsg("update_data", s.hash, sender, dhtNode.succ[1], sender))
+			}()
 			var nodes [len(dhtNode.fingers.fingerList)]*Finger
 			if dhtNode.fingers.fingerList[0] == nil {
 				for i := 0; i < len(dhtNode.fingers.fingerList); i++ {
@@ -589,7 +595,7 @@ func (dhtNode *DHTNode) fingerTimer() {
 	for {
 		if dhtNode.online != 0 {
 
-			time.Sleep(time.Second * 4)
+			time.Sleep(time.Millisecond * 7300)
 			go dhtNode.QueueTask(createTask("fixFingers", nil))
 			if dhtNode.nodeId == "10" {
 				dhtNode.QueueTask(createTask("print", createMsg("", "", "1", "", "")))

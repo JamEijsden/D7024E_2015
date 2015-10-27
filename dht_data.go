@@ -20,12 +20,15 @@ func initStorage(dhtNode *DHTNode) {
 		createDataFolder("node_storage/" + dhtNode.nodeId)
 		return
 	}
-	if finfo.IsDir() {
-		fmt.Println(dhtNode.nodeId + "> Storage folder exists")
-		// it's a file
-	} else {
-		fmt.Println("It's a file")
-		// it's a directory
+	if finfo != nil {
+
+		if finfo.IsDir() {
+			fmt.Println(dhtNode.nodeId + "> Storage folder exists")
+			// it's a file
+		} else {
+			fmt.Println("It's a file")
+			// it's a directory
+		}
 	}
 
 }
@@ -138,20 +141,26 @@ func replicate(dhtNode *DHTNode, msg *Msg) {
 		fmt.Println(dhtNode.nodeId + "> Creating storage folder replicate")
 		createDataFolder(path)
 
-	} else if finfo.IsDir() {
-		//fmt.Println(finfo)
-		fmt.Println(dhtNode.nodeId + "> Storage folder exists replicate")
-		// it's a file
-	} else {
-		fmt.Println("It's a file")
-		return
-		// it's a directory
+	}
+	if finfo != nil {
+		if finfo.IsDir() {
+			//fmt.Println(finfo)
+			fmt.Println(dhtNode.nodeId + "> Storage folder exists replicate")
+			// it's a file
+		} else {
+			fmt.Println("It's a file")
+			return
+			// it's a directory
+		}
+
 	}
 	go fileDecode(dhtNode, msg.Data, (path + "/" + msg.Key))
 
 }
 
 func relocateBackup(dhtNode *DHTNode) {
+	sender := dhtNode.contact.ip + ":" + dhtNode.contact.port
+	oldfilepath := "node_storage/" + dhtNode.pred[0] + "/"
 	oldpath := "node_storage/" + dhtNode.nodeId + "/" + dhtNode.pred[0] + "/"
 	path := "node_storage/" + dhtNode.nodeId + "/"
 	files, _ := ioutil.ReadDir("node_storage/" + dhtNode.nodeId + "/" + dhtNode.pred[0] + "/")
@@ -166,14 +175,19 @@ func relocateBackup(dhtNode *DHTNode) {
 				fmt.Println(dhtNode.nodeId)
 				os.Rename(oldpath+f.Name(), path+f.Name())
 
+				b, _ := loadData("node_storage/" + dhtNode.nodeId + "/" + f.Name())
+				str := base64.StdEncoding.EncodeToString(b)
+				m := createDataMsg("data_save", f.Name(), "", sender, "", []byte("data:text/plain;base64,"+str))
+				go dhtNode.transport.send(m)
 			}
 		}
-		//dhtNode.transport.send(createMsg("data_save", dhtNode.nodeId, "", dhtNode.succ[1], ""))
 		os.Remove(oldpath)
+		os.RemoveAll(oldfilepath)
 	}
 }
 
 func updateData(dhtNode *DHTNode, msg *Msg) {
+	//oldfilepath := "node_storage/" + dhtNode.nodeId + "/"
 	files, _ := ioutil.ReadDir("node_storage/" + dhtNode.nodeId + "/")
 	for _, f := range files {
 		if hashString(f.Name()) < msg.Key && f.IsDir() == false {
@@ -193,6 +207,10 @@ func updateData(dhtNode *DHTNode, msg *Msg) {
 			fmt.Print(f.Name())
 			fmt.Println(" removed from backup node.")
 			os.Remove("node_storage/" + dhtNode.nodeId + "/" + f.Name())
+			m := createDataMsg("update_data", f.Name(), "", dhtNode.succ[1], "", []byte(""))
+			go dhtNode.transport.send(m)
+		} else {
+			os.RemoveAll("node_storage/" + dhtNode.nodeId + "/" + dhtNode.pred[0] + "/")
 		}
 	}
 }
