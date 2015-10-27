@@ -22,9 +22,8 @@ function startUpload() {
 		  console.log(data);
            xhr.onload = function() {
 				if (xhr.status == 200) {
-					
-					setTimeout(function(){location.reload();},500);
-					//alert("Success! Upload completed");
+					location.reload();
+					alert("Success! Upload completed");
 				} else {
 					alert("Error! Upload failed");
 				}
