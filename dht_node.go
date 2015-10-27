@@ -220,15 +220,59 @@ func (dhtNode *DHTNode) stabi() {
 
 				dhtNode.succ[0] = r.Key
 				dhtNode.succ[1] = r.Origin
+				waitRespons.Stop()
 				return
 			}
 			go dhtNode.transport.send(createMsg("notify", dhtNode.nodeId, sender, dhtNode.succ[1], sender))
 			return
 		case s := <-waitRespons.C:
 			s = s
+			fmt.Println("succ is dead")
 			dhtNode.succ[0] = dhtNode.fingers.fingerList[1].hash
 			dhtNode.succ[1] = dhtNode.fingers.fingerList[1].address
-			return
+			//if dhtNode.online == 1 {
+			//	findAliveSucc(dhtNode)
+			//	fmt.Println("out of findAliveSucc")
+			//}
+		}
+	}
+}
+
+func findAliveSucc(dhtNode *DHTNode) {
+	waitRespons := time.NewTimer(time.Millisecond * 2)
+	waitRespons.Stop()
+	found := false
+	fmt.Print("findingSucc to: ")
+	fmt.Println(dhtNode.nodeId)
+	tempAddr := ""
+	sender := dhtNode.contact.ip + ":" + dhtNode.contact.port
+	for i := 1; i < len(dhtNode.fingers.fingerList); i++ {
+		if dhtNode.fingers.fingerList[i].address == tempAddr {
+
+		} else {
+			waitRespons.Reset(time.Millisecond * 500)
+			go dhtNode.transport.send(createMsg("pred", dhtNode.nodeId, sender, dhtNode.fingers.fingerList[i].address, sender))
+
+			for found != true {
+				select {
+				case r := <-dhtNode.responseMsg:
+					fmt.Print("We got a response ")
+					fmt.Println(dhtNode.fingers.fingerList[i])
+					r = r
+					dhtNode.succ[0] = dhtNode.fingers.fingerList[i].hash
+					dhtNode.succ[1] = dhtNode.fingers.fingerList[i].address
+					found = true
+					waitRespons.Stop()
+					return
+
+				case s := <-waitRespons.C:
+					fmt.Println("Fail response")
+					s = s
+					tempAddr = dhtNode.fingers.fingerList[i].address
+					found = true
+				}
+			}
+			found = false
 		}
 	}
 }

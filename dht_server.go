@@ -83,7 +83,7 @@ func (transport *Transport) processMsg() {
 							transport.node.responseMsg <- m
 						}()
 					case "heartbeat":
-						go transport.send(createMsg("heartbeat_respons", transport.node.nodeId, m.Dst, m.Src, m.Dst))
+						go transport.node.heartbeatRespons(m)
 
 						//go transport.node.QueueTask(createTask("foundSucc", m))
 					case "findSucc":
@@ -100,7 +100,7 @@ func (transport *Transport) processMsg() {
 						}()
 
 					case "data_save":
-						if m.Src != transport.node.pred[1] || m.Origin == transport.node.succ[1] {
+						if m.Src != transport.node.pred[1] || m.Origin == transport.node.pred[1] {
 							go savedata(transport.node, m)
 						} else {
 							go replicate(transport.node, m)

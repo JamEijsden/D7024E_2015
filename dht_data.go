@@ -13,30 +13,15 @@ import (
 
 func initStorage(dhtNode *DHTNode) {
 
-	finfo, err := os.Stat("node_storage")
+	finfo, err := os.Stat("node_storage/" + dhtNode.nodeId)
 	if err != nil {
 		// no such file or dir
 		fmt.Println(dhtNode.nodeId + "> Creating storage folder")
-		createDataFolder("node_storage")
-		return
-	}
-	if finfo.IsDir() {
-		fmt.Println(dhtNode.nodeId + "> Storage folder exists")
-		// it's a file
-	} else {
-		fmt.Println("It's a file")
-		// it's a directory
-	}
-
-	finfo, err = os.Stat("node_storage/" + dhtNode.nodeId)
-	if err != nil {
-		// no such file or dir
-		fmt.Println(dhtNode.nodeId + "> Creating node folder")
 		createDataFolder("node_storage/" + dhtNode.nodeId)
 		return
 	}
 	if finfo.IsDir() {
-		fmt.Println(dhtNode.nodeId + "> Storage node exists")
+		fmt.Println(dhtNode.nodeId + "> Storage folder exists")
 		// it's a file
 	} else {
 		fmt.Println("It's a file")
@@ -139,7 +124,6 @@ func getAllData(dhtNode *DHTNode) string {
 }
 
 func savedata(dhtNode *DHTNode, msg *Msg) {
-	fmt.Println(dhtNode.nodeId + " SAAAAAVEED")
 	go fileDecode(dhtNode, msg.Data, ("node_storage/" + dhtNode.nodeId + "/" + msg.Key))
 	msg.Src = dhtNode.contact.ip + ":" + dhtNode.contact.port
 	msg.Dst = dhtNode.succ[1]
@@ -147,7 +131,6 @@ func savedata(dhtNode *DHTNode, msg *Msg) {
 }
 
 func replicate(dhtNode *DHTNode, msg *Msg) {
-	fmt.Println(dhtNode.nodeId + " REEPLICIIATIED")
 	path := "node_storage/" + dhtNode.nodeId + "/" + dhtNode.pred[0]
 	finfo, err := os.Stat(path)
 	if err != nil {
@@ -185,6 +168,7 @@ func relocateBackup(dhtNode *DHTNode) {
 
 			}
 		}
+		//dhtNode.transport.send(createMsg("data_save", dhtNode.nodeId, "", dhtNode.succ[1], ""))
 		os.Remove(oldpath)
 	}
 }
