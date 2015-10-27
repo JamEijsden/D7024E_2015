@@ -76,6 +76,7 @@ func updateFingers(dhtNode *DHTNode) {
 
 			idBytes, _ := hex.DecodeString(dhtNode.nodeId)
 			fingerHex, _ := calcFinger(idBytes, (i + 1), BITS)
+
 			if i == 0 {
 				//dhtNode.transport.send(createMsg("lookup", fingerHex, src, dhtNode.fingers.fingerList[i].address, src))
 				go dhtNode.lookup(fingerHex)
